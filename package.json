@@ -1,0 +1,29 @@
+{
+  "name": "claude-vault",
+  "version": "0.1.0",
+  "description": "Local proxy that redacts secrets from Claude Code API traffic",
+  "type": "module",
+  "main": "src/proxy.ts",
+  "bin": {
+    "claude-vault": "bin/claude-vault.ts"
+  },
+  "scripts": {
+    "start": "bun run src/proxy.ts",
+    "seed": "bun run src/seed.ts",
+    "cli": "bun run bin/claude-vault.ts",
+    "test": "bun run src/test-local.ts"
+  },
+  "keywords": ["claude", "claude-code", "secrets", "vault", "proxy", "redaction", "security"],
+  "author": "nopoint",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nopointt/claude-vault"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

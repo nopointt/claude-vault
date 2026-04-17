@@ -1,0 +1,7 @@
+node_modules/
+*.enc
+*.key
+buffer.txt
+proxy.pid
+.keep
+bun.lock

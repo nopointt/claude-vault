@@ -1,0 +1,5 @@
+src/seed.ts
+src/test-local.ts
+src/test-redaction.ts
+tsconfig.json
+.claude-vault/
