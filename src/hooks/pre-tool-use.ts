@@ -1,41 +1,67 @@
 import { vaultGet } from "../vault";
 
+// Tools where vault placeholders should be substituted before execution.
+// Tools that only INSPECT content (Read, Grep, Glob) are intentionally
+// excluded so that searches for the literal placeholder text are not
+// mangled. The field list is explicit per-tool so we never scan unknown
+// nested fields for placeholders that should pass through unchanged.
+const FIELD_MAP: Record<string, readonly string[]> = {
+  Bash: ["command"],
+  Write: ["content"],
+  Edit: ["old_string", "new_string"],
+  WebFetch: ["url", "prompt"],
+  NotebookEdit: ["new_source"],
+};
+
+const PLACEHOLDER_RE = /<<VAULT:([^>]+)>>/g;
+
 const input = await Bun.stdin.text();
-let parsed: { tool_name?: string; tool_input?: { command?: string } };
+let parsed: { tool_name?: string; tool_input?: Record<string, unknown> };
 try {
   parsed = JSON.parse(input);
 } catch {
   process.exit(0);
 }
 
-if (parsed.tool_name !== "Bash") {
+const toolName = parsed.tool_name ?? "";
+const fields = FIELD_MAP[toolName];
+if (!fields) {
   process.exit(0);
 }
 
-const command = parsed.tool_input?.command ?? "";
-const placeholders = [...command.matchAll(/<<VAULT:([^>]+)>>/g)];
-
-if (placeholders.length === 0) {
-  process.exit(0);
-}
-
-let updatedCommand = command;
+const toolInput = parsed.tool_input ?? {};
 const missing: string[] = [];
+const updatedInput: Record<string, unknown> = { ...toolInput };
+let substituted = false;
 
-for (const match of placeholders) {
-  const name = match[1];
-  const value = await vaultGet(name);
-  if (value) {
-    updatedCommand = updatedCommand.replaceAll(`<<VAULT:${name}>>`, value);
-  } else if (!missing.includes(name)) {
-    missing.push(name);
+for (const field of fields) {
+  const raw = toolInput[field];
+  if (typeof raw !== "string") continue;
+
+  const matches = [...raw.matchAll(PLACEHOLDER_RE)];
+  if (matches.length === 0) continue;
+
+  let resolved = raw;
+  for (const m of matches) {
+    const name = m[1];
+    const value = await vaultGet(name);
+    if (value) {
+      resolved = resolved.replaceAll(`<<VAULT:${name}>>`, value);
+    } else if (!missing.includes(name)) {
+      missing.push(name);
+    }
+  }
+
+  if (resolved !== raw) {
+    updatedInput[field] = resolved;
+    substituted = true;
   }
 }
 
 if (missing.length > 0) {
-  // Block rather than let the literal <<VAULT:name>> placeholder hit the
-  // shell — that would at best run a broken command, at worst leak the
-  // placeholder syntax to external systems.
+  // Block rather than let the literal placeholder reach the tool — that
+  // would at best run a broken action, at worst leak the placeholder
+  // syntax to external systems (files on disk, HTTP requests, etc).
   const output = {
     decision: "block",
     reason: `claude-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: claude-vault add <name>. Run \`claude-vault list\` to see stored secrets.`,
@@ -44,8 +70,12 @@ if (missing.length > 0) {
   process.exit(0);
 }
 
+if (!substituted) {
+  process.exit(0);
+}
+
 const output = {
   decision: "approve",
-  updatedInput: { command: updatedCommand },
+  updatedInput,
 };
 console.log(JSON.stringify(output));
