@@ -212,11 +212,23 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 
   async status() {
     const pidFile = Bun.file(join(VAULT_DIR, "proxy.pid"));
-    const hasPid = await pidFile.exists() && (await pidFile.text()).trim().length > 0;
+    let proxyStatus = "stopped";
+    if (await pidFile.exists()) {
+      const pidStr = (await pidFile.text()).trim();
+      if (pidStr.length > 0) {
+        const pid = parseInt(pidStr);
+        try {
+          process.kill(pid, 0);
+          proxyStatus = `running (PID: ${pid})`;
+        } catch {
+          proxyStatus = `stale PID file (PID ${pid} not running)`;
+        }
+      }
+    }
     const keys = await vaultList();
     console.log(`Vault: ${VAULT_DIR}`);
     console.log(`Secrets: ${keys.length}`);
-    console.log(`Proxy: ${hasPid ? "running (check PID)" : "stopped"}`);
+    console.log(`Proxy: ${proxyStatus}`);
   },
 };
 

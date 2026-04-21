@@ -33,6 +33,6 @@ await wipeBuffer();
 const keys = await vaultList();
 const output = {
   decision: "block",
-  reason: `Secret "${name}" stored in vault (${value.length} chars, encrypted). Buffer wiped. Vault now has ${keys.length} key(s): ${keys.join(", ")}. Use <<VAULT:${name}>> as placeholder.`,
+  reason: `Secret "${name}" stored in vault (encrypted). Buffer wiped. Vault now has ${keys.length} key(s): ${keys.join(", ")}. Use <<VAULT:${name}>> as placeholder.`,
 };
 console.log(JSON.stringify(output));
