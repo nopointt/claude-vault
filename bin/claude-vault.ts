@@ -73,16 +73,18 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   },
 
   async start() {
-    const proxyPath = join(import.meta.dir, "..", "src", "proxy.ts");
-    const proc = Bun.spawn(["bun", "run", proxyPath], {
-      stdout: "inherit",
-      stderr: "inherit",
-      stdin: "ignore",
-    });
+    // Run the proxy in-process. The previous implementation spawned a
+    // subprocess (`bun run proxy.ts`) and awaited it, which meant the CLI
+    // command blocked the terminal AND the PID written to proxy.pid
+    // belonged to the subprocess rather than the foreground command the
+    // user could Ctrl-C. In-process keeps a single PID, single log stream,
+    // and straightforward lifecycle (Ctrl-C stops the proxy).
     const pidFile = join(VAULT_DIR, "proxy.pid");
-    await Bun.write(pidFile, String(proc.pid));
-    console.log(`Proxy started (PID: ${proc.pid})`);
-    await proc.exited;
+    await Bun.write(pidFile, String(process.pid));
+    console.log(`Proxy starting in-process (PID: ${process.pid})`);
+    // Importing proxy.ts runs its top-level `Bun.serve(...)` which binds
+    // the port and keeps the event loop alive.
+    await import("../src/proxy");
   },
 
   async stop() {
