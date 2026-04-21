@@ -46,31 +46,37 @@ async function save(data: VaultData): Promise<void> {
   renameSync(tmpFile, VAULT_FILE);
 }
 
+/** Store a secret in the encrypted vault. Creates or overwrites. */
 export async function vaultSet(name: string, value: string): Promise<void> {
   const data = await load();
   const updated = { ...data, [name]: value };
   await save(updated);
 }
 
+/** Retrieve a secret by name. Returns undefined if not found. */
 export async function vaultGet(name: string): Promise<string | undefined> {
   const data = await load();
   return data[name];
 }
 
+/** Check if a secret exists in the vault. */
 export async function vaultHas(name: string): Promise<boolean> {
   const data = await load();
   return name in data;
 }
 
+/** List all secret names in the vault. */
 export async function vaultList(): Promise<string[]> {
   const data = await load();
   return Object.keys(data);
 }
 
+/** Return all secrets as a name→value map. Used by the proxy to load redaction targets. */
 export async function vaultAll(): Promise<VaultData> {
   return load();
 }
 
+/** Remove a secret. Returns true if it existed. */
 export async function vaultDelete(name: string): Promise<boolean> {
   const data = await load();
   if (!(name in data)) return false;
@@ -79,6 +85,7 @@ export async function vaultDelete(name: string): Promise<boolean> {
   return true;
 }
 
+/** Read the plaintext buffer file (used by `context-vault add` for non-interactive input). */
 export async function readBuffer(): Promise<string | null> {
   try {
     const file = Bun.file(BUFFER_FILE);
@@ -91,6 +98,7 @@ export async function readBuffer(): Promise<string | null> {
   }
 }
 
+/** Securely wipe the buffer file: overwrite with random bytes, then truncate. */
 export async function wipeBuffer(): Promise<void> {
   try {
     const file = Bun.file(BUFFER_FILE);
@@ -108,6 +116,7 @@ export async function wipeBuffer(): Promise<void> {
   }
 }
 
+/** Initialize the vault directory and generate an encryption key if none exists. */
 export async function initVault(): Promise<void> {
   await ensureDir();
   const keyFile = Bun.file(join(VAULT_DIR, "vault.key"));

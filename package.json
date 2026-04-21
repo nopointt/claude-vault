@@ -19,8 +19,9 @@
     "start": "bun run src/proxy.ts",
     "seed": "bun run src/seed.ts",
     "cli": "bun run bin/context-vault.ts",
-    "test": "bun run src/test-local.ts",
-    "test:redaction": "bun run src/test-redaction.ts"
+    "test": "bun test",
+    "test:e2e": "bun run src/test-local.ts",
+    "test:e2e:redaction": "bun run src/test-redaction.ts"
   },
   "keywords": [
     "claude",

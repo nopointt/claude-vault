@@ -10,6 +10,7 @@ const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 const IS_WINDOWS = process.platform === "win32";
 
+/** Generate a 32-byte AES-256 key, write to vault.key, chmod 600 on Unix. */
 export async function generateKey(): Promise<Buffer> {
   const key = randomBytes(32);
   await Bun.write(KEY_FILE, key);
@@ -21,6 +22,7 @@ export async function generateKey(): Promise<Buffer> {
   return key;
 }
 
+/** Load the vault encryption key from disk. Warns if permissions are too open. */
 export async function loadKey(): Promise<Buffer> {
   const file = Bun.file(KEY_FILE);
   if (!(await file.exists())) {
@@ -38,6 +40,7 @@ export async function loadKey(): Promise<Buffer> {
   return Buffer.from(buf);
 }
 
+/** AES-256-GCM encrypt. Returns packed buffer: [IV 12B][AuthTag 16B][Ciphertext]. */
 export function encrypt(plaintext: string, key: Buffer): Buffer {
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
@@ -46,6 +49,7 @@ export function encrypt(plaintext: string, key: Buffer): Buffer {
   return Buffer.concat([iv, authTag, encrypted]);
 }
 
+/** AES-256-GCM decrypt. Expects packed format from encrypt(). Throws on tamper/wrong key. */
 export function decrypt(packed: Buffer, key: Buffer): string {
   const iv = packed.subarray(0, IV_LENGTH);
   const authTag = packed.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
