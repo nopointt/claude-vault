@@ -144,10 +144,20 @@ async function handleMessages(req: Request): Promise<Response> {
       sseBuffer += decoder.decode(value, { stream: true });
 
       if (sseBuffer.length > maxSecretLen) {
-        const safeLen = sseBuffer.length - maxSecretLen;
-        const safe = sseBuffer.slice(0, safeLen);
-        sseBuffer = sseBuffer.slice(safeLen);
-        controller.enqueue(encoder.encode(redactString(safe, secrets)));
+        // Redact the ENTIRE buffer, not just the leading safe portion.
+        // The previous implementation ran redactString only on the
+        // part it was about to emit, so any secret straddling the emit
+        // boundary (start in `safe`, end in the kept tail) was never
+        // matched and its prefix leaked to the client.
+        //
+        // We keep `maxSecretLen` bytes of tail as carryover so that any
+        // secret of length ≤ maxSecretLen which is split across two
+        // network chunks is fully reassembled here before we emit.
+        const redacted = redactString(sseBuffer, secrets);
+        const safeLen = redacted.length - maxSecretLen;
+        const safe = redacted.slice(0, safeLen);
+        sseBuffer = redacted.slice(safeLen);
+        controller.enqueue(encoder.encode(safe));
       }
     },
   });
