@@ -1,5 +1,9 @@
 # context-vault
 
+[![CI](https://github.com/nopointt/context-vault/actions/workflows/ci.yml/badge.svg)](https://github.com/nopointt/context-vault/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/context-vault)](https://www.npmjs.com/package/context-vault)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Local proxy that redacts secrets from Claude Code API traffic before they reach Anthropic's servers.
 
 ## Problem
@@ -94,6 +98,7 @@ claude
 |---|---|---|
 | `CONTEXT_VAULT_PORT` | `9277` | Proxy listen port |
 | `ANTHROPIC_BASE_URL` | Set by `init` | Points Claude Code at the proxy |
+| `ANTHROPIC_UPSTREAM` | `https://api.anthropic.com` | Upstream API URL (for testing or proxy chains) |
 
 ## Security model
 
@@ -132,7 +137,16 @@ If the PID file is stale, remove it manually: `rm ~/.context-vault/proxy.pid`
 v0.2.0 handles upstream stream interruptions gracefully — the proxy flushes buffered content and emits a clean SSE error event instead of crashing. If you see this on older versions, upgrade.
 
 **Secrets not being redacted**
-The proxy caches secrets for 5 seconds. After `context-vault add`, wait a moment or restart the proxy.
+The proxy caches secrets for 5 seconds. After `context-vault add`, wait a moment or send `SIGHUP` to force a cache refresh:
+```bash
+kill -HUP $(cat ~/.context-vault/proxy.pid)
+```
+
+**Changes to proxy code not taking effect**
+Bun caches modules at process start. After editing context-vault source files, you must restart the proxy:
+```bash
+context-vault stop && context-vault start
+```
 
 **ANTHROPIC_BASE_URL not set**
 Run `context-vault init` to configure Claude Code settings, or set it manually:
