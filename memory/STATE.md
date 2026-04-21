@@ -1,13 +1,14 @@
 # STATE — contexter-vault
 
 ## Position
-- **Phase:** V-01 Rename + Ship v0.2.0 🔶 IN PROGRESS (P1-P3 done, P4-P10 pending)
-- **Status:** **Rename complete** — claude-vault → contexter-vault across all code (package.json, bin/, src/*, hooks, .npmignore, README, .claudeignore). Directory copied to `nospace/development/contexter-vault/`. Proxy SSE fix in proxy.ts (try/catch + graceful close + synthetic error event). ANTHROPIC_BASE_URL re-added to ~/.claude/settings.json. Settings.json hook paths updated to new `/development/contexter-vault/` location. **Not committed yet** — 9 modified files + 1 renamed binary + 1 new README in workdir.
-- **Last session:** 2026-04-21 (Axis, session f142c2c4 CLOSE #1 — V-01 P1-P7 done, memory infrastructure complete, 4 orch skills updated, 18 bugs + 18 TD catalogued, B-18 root cause identified)
-- **Sessions total:** 1 (first official session for contexter-vault as separate project; predecessor work in claude-vault era under session 97328fa5 + f142c2c4 but those pre-dated project memory)
-- **Next:** (1) P4 memory infrastructure — this file + L1/L2/L3/backlog/chronicle + global pointer. (2) P5/P6 bug + tech debt audit formalized as backlog. (3) P7 V-02..V-06 epics. (4) P8 bun publish --dry-run + LICENSE verify. (5) P10 atomic commits per phase. (6) Self-healing watchdog loop in `start` command (proxy respawn on internal crash). (7) /health endpoint in proxy. (8) Real `status` check via curl /health. (9) Manual by nopoint: `mv ~/.claude-vault ~/.contexter-vault`, GitHub repo rename `nopointt/claude-vault → nopointt/contexter-vault`.
+- **Phase:** V-01..V-07 ✅ COMPLETE (all 42/42 backlog items resolved, ready for npm publish)
+- **Status:** **v0.2.0 ready** — contexter-vault final name (context-vault taken on npm by another author v3.19.0). 36 unit tests pass. GitHub Actions CI + release.yml. 10 atomic commits pushed. Tag `v0.2.0` pushed. Awaiting `npm publish --access public` by nopoint (logged in).
+- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #2 — all V-02..V-07 epics closed, full rebrand context-vault→contexter-vault, 25 files in rename commit 4ee0205)
+- **Sessions total:** 2
+- **Next:** (1) `npm publish --access public` (manual by nopoint). (2) Set `NPM_TOKEN` in GitHub Secrets for release workflow. (3) Optional: GitHub repo rename `nopointt/claude-vault → nopointt/contexter-vault`. (4) Optional: local dir rename (breaks Axis routing — update skill first).
 
 ## Key Completions
+- **Session 2 (2026-04-21):** All 42 backlog items resolved (V-02 Resilience, V-03 Security, V-04 Observability, V-05 GTM, V-06 Advanced, V-07 Tests+CI). 36 unit tests (Bun test). GitHub Actions CI + release workflows. Full rebrand context-vault→contexter-vault. `v0.2.0` tag pushed.
 - Package rename: claude-vault → contexter-vault v0.2.0 (package.json, bin/, all src/*, all hooks)
 - Proxy SSE crash fix: try/catch around `reader.read()` in pull() loop, graceful close + flush buffer + synthetic SSE error event (proxy.ts lines 124-188)
 - Log prefix unification: `[claude-vault]` + `[vault-proxy]` → `[contexter-vault]` everywhere
@@ -19,6 +20,10 @@
 - `~/.claudeignore` updated: `.contexter-vault/` added, `.claude-vault/` kept for transition
 
 ## Active Decisions
+- **D-42:** npm package name `context-vault` taken (v3.19.0, unrelated author) → full rebrand to `contexter-vault`. CLI + vault dir + log prefix all renamed.
+- **D-43:** Directory `nospace/development/context-vault/` and GitHub repo `nopointt/claude-vault` intentionally NOT renamed. Reason: Axis skill routing has path hardcoded; git history simpler without move. npm name is the canonical brand; directory/repo are internal paths.
+- **D-44:** `bun test` is canonical test command. Old e2e tests kept as `test:e2e*` scripts for live proxy smoke testing.
+- **D-45:** Vault envelope format `{ _version: 1, secrets: {...} }` is forward-compat marker. Bare-object format (pre-v0.2.0) still readable.
 - **D-V01-01:** Rename is single direction, no backward compat. Old `~/.claude-vault/` path: manual migration by user via `mv`. README has migration section.
 - **D-V01-02:** `CONTEXT_VAULT_PORT` replaces `CLAUDE_VAULT_PORT` — no dual-read fallback. Users override port via this env.
 - **D-V01-03:** Placeholder format stays `<<VAULT:name>>` — unchanged. Stable contract for downstream tooling/prompts.
@@ -31,6 +36,9 @@
 - **D-V01-10:** Bug audit preserves all findings (B-01..B-17) in `contexter-vault-backlog.md` — not silently fixed in V-01. Each gets explicit V-02+ epic assignment.
 
 ## Blockers
+- ✅ **npm name `context-vault` taken** (resolved D-42: renamed to `contexter-vault`)
+- ✅ **v0.2.0 unreleased** (resolved: 10 commits + tag pushed; awaiting `npm publish` only)
+- ✅ **B-18 SSE outer try/catch missing** (resolved PRE-LAUNCH)
 - **Proxy running from stale location**: Current proxy process (PID 7232 from session 97328fa5 killed during move; a second proxy at PID b14zdtnrf was spawned by worktree session per nopoint screenshot #2) runs from `nospace/tools/claude-vault/src/proxy.ts`, NOT from new `development/contexter-vault/`. After V-01 commits: kill running proxy, restart from new location.
 - **Old directory still at `tools/claude-vault/`**: kept per G1 (never delete). nopoint cleans manually after verification. Do NOT `rm -rf`.
 - **GitHub repo not yet renamed**: nopoint must rename `nopointt/claude-vault → nopointt/contexter-vault` via GitHub Settings UI. GitHub auto-creates 301 redirect from old URL.
@@ -50,9 +58,13 @@
 - CI/CD: GitHub Actions, cross-platform test matrix, coverage report
 
 ## Metrics
-- Version: 0.2.0 (in progress, unreleased)
-- npm: not yet published (first-time)
-- GitHub: github.com/nopointt/claude-vault (pending rename to contexter-vault)
+- Version: 0.2.0 (ready, tag `v0.2.0` pushed; awaiting npm publish)
+- npm: not yet published (name `contexter-vault` verified free)
+- GitHub: github.com/nopointt/claude-vault (intentionally not renamed per D-43)
+- Tests: 36 pass (Bun test runner) — crypto round-trip, SSE sliding window, redaction, vault format, headers, body limits
+- CI: GitHub Actions ci.yml + release.yml configured
+- Backlog: 42/42 resolved (ALL closed)
+- Sessions: 2
 - License: MIT
 - Dependencies: 0 runtime deps + `@types/bun` devDep (minimal surface area)
 - Runtime: Bun ≥1.0.0
@@ -61,6 +73,6 @@
 - Test coverage: smoke tests only, tautology bugs in test-redaction.ts + test-local.ts (B-01/B-02)
 - Encryption: AES-256-GCM (Node.js native crypto via node:crypto)
 - Port: 9277 (configurable via `CONTEXT_VAULT_PORT`)
-- Bugs catalogued: 17 (B-01 to B-17 in backlog)
-- Tech debt items: ~15 (documentation, CI, observability, security)
-- Commits ahead of origin/main: pending (V-01 not yet committed)
+- Bugs catalogued: 24 (B-01..B-24, 22 resolved + B-05 resolved V-05 + B-12 resolved V-06; 0 remaining)
+- Tech debt items: 18 (16 resolved, 2 deferred: TD-16 bun-only by design, TD-18 partial)
+- Commits: 10 this session, all pushed (last: `4ee0205` full rebrand)

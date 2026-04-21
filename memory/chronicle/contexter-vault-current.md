@@ -64,3 +64,40 @@
 - **Pending manual by nopoint:** (1) mv ~/.claude-vault ~/.contexter-vault after proxy stopped, (2) GitHub repo rename nopointt/claude-vault → nopointt/contexter-vault, (3) kill PID 13892 + restart proxy from new development/contexter-vault/ location, (4) bun publish when P8-P10 done.
 - **Parallel scope (contexter) NOT updated.** Contexter Pre-CTX-11 commits (a5eb98a, b1768f8, c3f4033) on origin/main but STATE.md still at session 244. Next contexter session should digest recovery addendum §C.
 - **axis-active** now routes to contexter-vault. Return to contexter via manual edit on next /startaxis.
+<!-- ENTRY:2026-04-21:CLOSE:2:context-vault:contexter-vault-v1 [AXIS] -->
+## 2026-04-21 — сессия 2 CLOSE [Axis]
+
+**Decisions:**
+- D-42: npm package name `context-vault` taken (v3.19.0) → full rebrand to `contexter-vault`
+- D-43: CLI binary renamed `context-vault` → `contexter-vault`; vault dir `~/.context-vault/` → `~/.contexter-vault/`
+- D-44: Directory `nospace/development/context-vault/` and GitHub repo `nopointt/claude-vault` KEPT as-is
+- D-45: All 42/42 backlog items resolved across V-02 through V-07
+- D-46: Epic contexter-vault-v1 COMPLETE — ready for npm publish
+
+**Files changed:**
+- `src/proxy.ts` — configurable upstream, SIGHUP, body limit, /metrics, redactString perf
+- `src/vault.ts` — envelope versioning, atomic write, secure wipe, JSDoc
+- `src/crypto.ts` — VAULT_DIR from constants, JSDoc
+- `src/constants.ts` — NEW (breaks circular dep)
+- `src/__tests__/*.ts` — NEW, 36 unit tests
+- `bin/contexter-vault.ts` (renamed) — PID liveness, --detach flag
+- `.github/workflows/{ci,release}.yml` — NEW, CI + npm release
+- `SECURITY.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md` — NEW
+- `CHANGELOG.md`, `README.md` — badges, troubleshooting
+- `package.json` — name `contexter-vault`
+- Memory files renamed context-vault-* → contexter-vault-*
+
+**Completed:**
+- PRE-LAUNCH, V-02, V-03, V-04, V-05, V-06, V-07 — all epics CLOSED
+- Full rebrand context-vault → contexter-vault
+- Pushed v0.2.0 tag to GitHub
+- 36 unit tests pass
+
+**Opened:**
+- npm publish (awaiting user action)
+- NPM_TOKEN in GitHub Secrets
+- Optional: rename GitHub repo + local dir
+
+**Notes:**
+- Directory + GitHub repo preserved intentionally (Axis routing depends on path)
+- 10 atomic commits this session; last `4ee0205` is full rebrand

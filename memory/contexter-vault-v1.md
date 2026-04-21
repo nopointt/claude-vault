@@ -1,8 +1,18 @@
 ---
-# contexter-vault-v1.md — V-01 Rename + Ship v0.2.0
-> Layer: L3 | Epic: V-01 | Status: 🔶 IN PROGRESS
-> Created: 2026-04-21 (session 97328fa5) | Predecessor: none (first official release)
-> Target: v0.2.0 on npm + GitHub + HN launch
+# contexter-vault-v1.md — V-01..V-07 Ship v0.2.0
+> Layer: L3 | Epic: V-01..V-07 | Status: ✅ COMPLETE
+> Created: 2026-04-21 (session 97328fa5) | Closed: 2026-04-21 (session d3a9f612)
+> Target: v0.2.0 on npm + GitHub — ACHIEVED (tag pushed, awaiting npm publish)
+> Last updated: 2026-04-21 session #2 CLOSE
+
+## Completion Summary (session d3a9f612)
+
+All 7 epics closed. 42/42 backlog items resolved. 36 unit tests pass. Full rebrand context-vault→contexter-vault due to npm name collision (D-42). 10 atomic commits pushed. Tag `v0.2.0` pushed to GitHub. Awaiting `npm publish --access public` (user action).
+
+**Remaining (manual by nopoint):**
+- [ ] `npm publish --access public`
+- [ ] `NPM_TOKEN` in GitHub Secrets
+- [ ] (optional) rename GitHub repo + local dir
 ---
 
 ## Goal
