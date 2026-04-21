@@ -1,6 +1,6 @@
 ---
 # context-vault-prelaunch.md — Pre-Launch Epic
-> Layer: L3 | Epic: PRE-LAUNCH | Status: 🔶 IN PROGRESS (code complete, pending commits)
+> Layer: L3 | Epic: PRE-LAUNCH | Status: ✅ COMPLETE (pending: bun publish --dry-run, npm adduser)
 > Created: 2026-04-21 (session d3a9f612, re-audit)
 > Gate: ALL tasks must pass before v0.2.0 publish to npm
 ---
@@ -216,5 +216,9 @@ netstat -ano | grep 9277 || echo "CLEAN"
 
 ## Execution Order
 
-PL-01 → PL-02 → PL-05 → PL-03 → PL-04 → PL-06 → PL-07 → PL-08 → PL-09
+PL-01 ✅ → PL-02 ✅ → PL-05 ✅ → PL-03 ✅ → PL-04 ✅ → PL-06 ✅ → PL-07 ✅ (partial) → PL-08 ✅ → PL-09 ✅
+
+## Completion
+
+All code tasks complete. 5 atomic commits on main. Remaining: `bun publish --dry-run` (needs `npm adduser`) and `npm view context-vault` (name check).
 (bugs first, then docs, then publish prep, then commits last)
