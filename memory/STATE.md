@@ -1,13 +1,14 @@
 # STATE — contexter-vault
 
 ## Position
-- **Phase:** V-01..V-07 ✅ COMPLETE (all 42/42 backlog items resolved, ready for npm publish)
-- **Status:** **v0.2.0 ready** — contexter-vault final name (context-vault taken on npm by another author v3.19.0). 36 unit tests pass. GitHub Actions CI + release.yml. 10 atomic commits pushed. Tag `v0.2.0` pushed. Awaiting `npm publish --access public` by nopoint (logged in).
-- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #2 — all V-02..V-07 epics closed, full rebrand context-vault→contexter-vault, 25 files in rename commit 4ee0205)
-- **Sessions total:** 2
-- **Next:** (1) `npm publish --access public` (manual by nopoint). (2) Set `NPM_TOKEN` in GitHub Secrets for release workflow. (3) Optional: GitHub repo rename `nopointt/claude-vault → nopointt/contexter-vault`. (4) Optional: local dir rename (breaks Axis routing — update skill first).
+- **Phase:** V-01..V-07 ✅ COMPLETE, v0.2.0 PUBLISHED on npm
+- **Status:** **contexter-vault@0.2.0 LIVE** on https://www.npmjs.com/package/contexter-vault. Installable via `bun install -g contexter-vault`. Axis skill routing + git remote URL migrated to `contexter-vault`. Remaining items are manual OS-level operations (dir rename, GitHub repo rename, proxy migration).
+- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #3 — npm publish live, Axis routing migrated, rename deferred items documented)
+- **Sessions total:** 3
+- **Next:** (1) nopoint revoke 2 compromised npm tokens. (2) nopoint rename local dir `development/context-vault/` → `contexter-vault/` (after closing Claude session). (3) nopoint rename GitHub repo via UI. (4) nopoint migrate running proxy to global npm install + rename `~/.claude-vault/` → `~/.contexter-vault/`. (5) nopoint generate fresh granular token → GitHub Secrets `NPM_TOKEN` → release.yml automation.
 
 ## Key Completions
+- **Session 3 (2026-04-21):** `contexter-vault@0.2.0` PUBLISHED on npm (granular token with Bypass 2FA). Axis skill routing (4 files) + `axis-active` + git remote URL migrated to `contexter-vault`. Rename of on-disk directory deferred (Windows cwd hold).
 - **Session 2 (2026-04-21):** All 42 backlog items resolved (V-02 Resilience, V-03 Security, V-04 Observability, V-05 GTM, V-06 Advanced, V-07 Tests+CI). 36 unit tests (Bun test). GitHub Actions CI + release workflows. Full rebrand context-vault→contexter-vault. `v0.2.0` tag pushed.
 - Package rename: claude-vault → contexter-vault v0.2.0 (package.json, bin/, all src/*, all hooks)
 - Proxy SSE crash fix: try/catch around `reader.read()` in pull() loop, graceful close + flush buffer + synthetic SSE error event (proxy.ts lines 124-188)
@@ -20,6 +21,12 @@
 - `~/.claudeignore` updated: `.contexter-vault/` added, `.claude-vault/` kept for transition
 
 ## Active Decisions
+- **D-52:** Axis skill routing files (startaxis/closeaxis/checkpointaxis/continueaxis) + axis-active migrated to project name `contexter-vault`. Paths in skill tables point to `development/contexter-vault/` — will break Axis until nopoint renames on-disk dir.
+- **D-51:** GitHub repo rename deferred (requires UI). Git remote URL pre-updated to `nopointt/contexter-vault.git` — push fails until GitHub rename completed.
+- **D-50:** Directory `development/context-vault/` on-disk rename blocked by Windows cwd hold. Manual step for nopoint after session close.
+- **D-49:** Two npm tokens leaked via chat (npm_XjcX..., npm_Gwkz...) — pending revoke by nopoint.
+- **D-48:** npm publish requires granular token with **Bypass 2FA** flag when account has no 2FA. Classic token + `--otp` is insufficient.
+- **D-47:** `contexter-vault@0.2.0` published to npmjs.com on 2026-04-21 13:22 UTC.
 - **D-42:** npm package name `context-vault` taken (v3.19.0, unrelated author) → full rebrand to `contexter-vault`. CLI + vault dir + log prefix all renamed.
 - **D-43:** Directory `nospace/development/context-vault/` and GitHub repo `nopointt/claude-vault` intentionally NOT renamed. Reason: Axis skill routing has path hardcoded; git history simpler without move. npm name is the canonical brand; directory/repo are internal paths.
 - **D-44:** `bun test` is canonical test command. Old e2e tests kept as `test:e2e*` scripts for live proxy smoke testing.
@@ -40,6 +47,9 @@
 - ✅ **v0.2.0 unreleased** (resolved: 10 commits + tag pushed; awaiting `npm publish` only)
 - ✅ **B-18 SSE outer try/catch missing** (resolved PRE-LAUNCH)
 - **Proxy running from stale location**: Current proxy process (PID 7232 from session 97328fa5 killed during move; a second proxy at PID b14zdtnrf was spawned by worktree session per nopoint screenshot #2) runs from `nospace/tools/claude-vault/src/proxy.ts`, NOT from new `development/contexter-vault/`. After V-01 commits: kill running proxy, restart from new location.
+- **Directory rename blocked by own cwd**: `development/context-vault/` cannot be renamed while this Claude session holds it as cwd. Manual step for nopoint: close session → Rename-Item → start new session in renamed dir.
+- **GitHub repo rename requires UI action**: cannot be done from CLI. Pre-updated git remote URL will fail push until done.
+- **Compromised npm tokens awaiting revoke**: `npm_XjcXAFWK...` + `npm_GwkztM1f...` — both transited Anthropic API via chat, nopoint to revoke both.
 - **Old directory still at `tools/claude-vault/`**: kept per G1 (never delete). nopoint cleans manually after verification. Do NOT `rm -rf`.
 - **GitHub repo not yet renamed**: nopoint must rename `nopointt/claude-vault → nopointt/contexter-vault` via GitHub Settings UI. GitHub auto-creates 301 redirect from old URL.
 - **npm publish not done**: V-01 W5 gates on successful `bun publish --dry-run`. Also requires `npm adduser` first-time (publisher account may not exist).
@@ -58,13 +68,13 @@
 - CI/CD: GitHub Actions, cross-platform test matrix, coverage report
 
 ## Metrics
-- Version: 0.2.0 (ready, tag `v0.2.0` pushed; awaiting npm publish)
-- npm: not yet published (name `contexter-vault` verified free)
-- GitHub: github.com/nopointt/claude-vault (intentionally not renamed per D-43)
-- Tests: 36 pass (Bun test runner) — crypto round-trip, SSE sliding window, redaction, vault format, headers, body limits
+- Version: 0.2.0 (PUBLISHED 2026-04-21 13:22 UTC)
+- npm: https://www.npmjs.com/package/contexter-vault — maintainer `nopoint`, 18 files, 60.9 KB unpacked
+- GitHub: github.com/nopointt/claude-vault (UI rename pending); git remote pre-updated to contexter-vault.git
+- Tests: 36 pass (Bun test runner)
 - CI: GitHub Actions ci.yml + release.yml configured
 - Backlog: 42/42 resolved (ALL closed)
-- Sessions: 2
+- Sessions: 3
 - License: MIT
 - Dependencies: 0 runtime deps + `@types/bun` devDep (minimal surface area)
 - Runtime: Bun ≥1.0.0
