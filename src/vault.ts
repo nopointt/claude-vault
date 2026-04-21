@@ -2,7 +2,7 @@ import { join } from "path";
 import { homedir } from "os";
 import { encrypt, decrypt, loadKey, generateKey } from "./crypto";
 
-const VAULT_DIR = join(homedir(), ".claude-vault");
+const VAULT_DIR = join(homedir(), ".context-vault");
 const VAULT_FILE = join(VAULT_DIR, "vault.enc");
 const BUFFER_FILE = join(VAULT_DIR, "buffer.txt");
 
@@ -24,8 +24,8 @@ async function load(): Promise<VaultData> {
     const json = decrypt(packed, key);
     return JSON.parse(json) as VaultData;
   } catch (err) {
-    console.error("[claude-vault] failed to decrypt vault — wrong key or corrupted file:", err);
-    throw new Error("Vault decryption failed. Check vault.key or reinitialize with: claude-vault init");
+    console.error("[context-vault] failed to decrypt vault — wrong key or corrupted file:", err);
+    throw new Error("Vault decryption failed. Check vault.key or reinitialize with: context-vault init");
   }
 }
 

@@ -1,6 +1,6 @@
-# claude-vault
+# context-vault
 
-Local proxy that redacts secrets from Claude Code API traffic before it reaches Anthropic's servers.
+Local proxy that redacts secrets from Claude Code API traffic before they reach Anthropic's servers.
 
 ## Problem
 
@@ -9,7 +9,7 @@ Everything you type in Claude Code — including API keys, tokens, and credentia
 ## How it works
 
 ```
-Claude Code ──► claude-vault proxy (localhost:9277) ──► Anthropic API
+Claude Code ──► context-vault proxy (localhost:9277) ──► Anthropic API
                       │
                       ├─ REQUEST:  scans messages[], replaces secret values
                       │            with <<VAULT:name>> placeholders
@@ -18,23 +18,28 @@ Claude Code ──► claude-vault proxy (localhost:9277) ──► Anthropic AP
                                    secret values back to placeholders
 ```
 
-Secrets are stored locally in an AES-256-GCM encrypted vault (`~/.claude-vault/vault.enc`). They never leave your machine.
+Secrets are stored locally in an AES-256-GCM encrypted vault (`~/.context-vault/vault.enc`). They never leave your machine.
+
+## Install
+
+```bash
+bun install -g context-vault
+```
+
+Requires [Bun](https://bun.sh) runtime (v1.0+).
 
 ## Quick start
 
 ```bash
-# Install
-bun install -g claude-vault
-
 # Initialize (creates vault, sets ANTHROPIC_BASE_URL in Claude Code settings)
-claude-vault init
+context-vault init
 
 # Add a secret
-echo "sk_live_abc123" > ~/.claude-vault/buffer.txt
-claude-vault add stripe-key
+echo "sk_live_abc123" > ~/.context-vault/buffer.txt
+context-vault add stripe-key
 
 # Start the proxy
-claude-vault start
+context-vault start
 
 # Use Claude Code normally — secrets are redacted automatically
 claude
@@ -42,18 +47,20 @@ claude
 
 ## Architecture
 
-### Three layers of protection
+### Four layers of protection
 
-**1. Proxy (primary)** — intercepts all API traffic via `ANTHROPIC_BASE_URL=http://localhost:9277`. Scans request payloads and SSE response streams. Replaces real values with `<<VAULT:name>>` placeholders using a sliding window algorithm that handles secrets split across SSE chunks.
+**1. Proxy (primary)** — intercepts all API traffic via `ANTHROPIC_BASE_URL=http://127.0.0.1:9277`. Scans request payloads and SSE response streams. Replaces real values with `<<VAULT:name>>` placeholders using a sliding window algorithm that handles secrets split across SSE chunks.
 
-**2. UserPromptSubmit hook** — handles `/secret store <name>` commands. Reads the value from `~/.claude-vault/buffer.txt` (you paste it there), encrypts and stores it, wipes the buffer. The secret value never appears in your typed message.
+**2. UserPromptSubmit hook** — handles `/secret store <name>` commands. Reads the value from `~/.context-vault/buffer.txt` (you paste it there), encrypts and stores it, wipes the buffer. The secret value never appears in your typed message.
 
 **3. PreToolUse hook** — when Claude writes a Bash command containing `<<VAULT:name>>`, the hook substitutes the real value at execution time. The real value runs locally but never enters the conversation context.
+
+**4. .claudeignore** — `context-vault init` adds `.context-vault/`, `*.key`, and `*.enc` to `~/.claudeignore`, preventing Claude's Read tool from accessing vault files directly.
 
 ### Encryption
 
 - Algorithm: AES-256-GCM (Node.js native crypto)
-- Key: 256-bit random, stored at `~/.claude-vault/vault.key`
+- Key: 256-bit random, stored at `~/.context-vault/vault.key`
 - Each write generates a fresh IV (12 bytes)
 - Authentication tag prevents tampering
 
@@ -61,25 +68,32 @@ claude
 
 | Command | Description |
 |---|---|
-| `claude-vault init` | Create vault, generate key, configure Claude Code |
-| `claude-vault start` | Start proxy server |
-| `claude-vault stop` | Stop proxy server |
-| `claude-vault add <name>` | Add secret from buffer.txt or stdin |
-| `claude-vault remove <name>` | Remove a secret |
-| `claude-vault list` | List stored secrets (masked) |
-| `claude-vault status` | Show vault and proxy status |
+| `context-vault init` | Create vault, generate key, configure Claude Code |
+| `context-vault start` | Start proxy server |
+| `context-vault stop` | Stop proxy server |
+| `context-vault add <name>` | Add secret from buffer.txt or stdin |
+| `context-vault remove <name>` | Remove a secret |
+| `context-vault list` | List stored secrets (masked) |
+| `context-vault status` | Show vault and proxy status |
 
 ## In-session usage
 
 ```
 # In Claude Code, after proxy is running:
 > /secret store my-api-key
-# (paste value into ~/.claude-vault/buffer.txt first)
+# (paste value into ~/.context-vault/buffer.txt first)
 
 # Claude can use the placeholder in commands:
 > Run: curl -H "Authorization: Bearer <<VAULT:my-api-key>>" https://api.example.com
 # The PreToolUse hook substitutes the real value at execution time
 ```
+
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `CONTEXT_VAULT_PORT` | `9277` | Proxy listen port |
+| `ANTHROPIC_BASE_URL` | Set by `init` | Points Claude Code at the proxy |
 
 ## Security model
 
@@ -92,18 +106,61 @@ claude
 
 ### What is NOT protected
 
-- Secrets typed directly in messages (before proxy processes them) exist briefly in Claude Code's local JSONL log
+- Secrets typed directly in messages exist briefly in Claude Code's local JSONL log before the proxy processes them on the next API call
 - If Claude runs a command that echoes a secret to stdout, the output appears in the tool result (the proxy redacts it on the next API call, but one round-trip may contain it)
-- The vault key file (`~/.claude-vault/vault.key`) is stored in plaintext — protect it with filesystem permissions
+- The vault key file (`~/.context-vault/vault.key`) is stored in plaintext — protect it with filesystem permissions
 - Local Claude Code conversation logs (`~/.claude/projects/`) are not encrypted by this tool
 
 ### Compliance
 
 This tool uses two officially documented Claude Code extension points:
-- `ANTHROPIC_BASE_URL` — [documented for LLM gateways](https://code.claude.com/docs/en/llm-gateway)
-- Hooks (UserPromptSubmit, PreToolUse) — [documented extension system](https://code.claude.com/docs/en/hooks)
+- `ANTHROPIC_BASE_URL` — [documented for LLM gateways](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/overview#llm-gateways)
+- Hooks (UserPromptSubmit, PreToolUse) — [documented extension system](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/hooks)
 
 All required headers (`anthropic-version`, `anthropic-beta`, `x-api-key`, `X-Claude-Code-Session-Id`) are forwarded unchanged. Usage remains fully attributable to your account.
+
+## Troubleshooting
+
+**Proxy won't start / port already in use**
+```bash
+context-vault stop
+context-vault start
+```
+If the PID file is stale, remove it manually: `rm ~/.context-vault/proxy.pid`
+
+**"JSON Parse error: Unterminated string" or "socket closed unexpectedly"**
+v0.2.0 handles upstream stream interruptions gracefully — the proxy flushes buffered content and emits a clean SSE error event instead of crashing. If you see this on older versions, upgrade.
+
+**Secrets not being redacted**
+The proxy caches secrets for 5 seconds. After `context-vault add`, wait a moment or restart the proxy.
+
+**ANTHROPIC_BASE_URL not set**
+Run `context-vault init` to configure Claude Code settings, or set it manually:
+```bash
+# In ~/.claude/settings.json, under "env":
+"ANTHROPIC_BASE_URL": "http://127.0.0.1:9277"
+```
+
+## Migrating from claude-vault
+
+If you used the previous `claude-vault` package:
+
+```bash
+# 1. Stop the old proxy
+claude-vault stop
+
+# 2. Move your vault data
+mv ~/.claude-vault ~/.context-vault
+
+# 3. Install the new package
+bun install -g context-vault
+
+# 4. Update settings.json hook paths if needed
+# 5. Start the new proxy
+context-vault start
+```
+
+Your encrypted vault data and keys are fully compatible — no re-encryption needed.
 
 ## Prohibited uses
 
@@ -112,11 +169,6 @@ This tool is designed exclusively for protecting credentials and sensitive data.
 - Bypass Anthropic's content moderation or acceptable use policy
 - Circumvent rate limiting or authentication
 - Share API access across multiple accounts
-
-## Requirements
-
-- [Bun](https://bun.sh) runtime
-- Claude Code CLI
 
 ## License
 

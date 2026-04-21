@@ -2,4 +2,6 @@ src/seed.ts
 src/test-local.ts
 src/test-redaction.ts
 tsconfig.json
+.context-vault/
 .claude-vault/
+memory/

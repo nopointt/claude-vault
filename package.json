@@ -1,25 +1,47 @@
 {
-  "name": "claude-vault",
-  "version": "0.1.0",
-  "description": "Local proxy that redacts secrets from Claude Code API traffic",
+  "name": "context-vault",
+  "version": "0.2.0",
+  "description": "Local proxy that redacts secrets from Claude Code API traffic before they reach Anthropic's servers",
   "type": "module",
   "main": "src/proxy.ts",
   "bin": {
-    "claude-vault": "bin/claude-vault.ts"
+    "context-vault": "bin/context-vault.ts"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "bun run src/proxy.ts",
     "seed": "bun run src/seed.ts",
-    "cli": "bun run bin/claude-vault.ts",
-    "test": "bun run src/test-local.ts"
+    "cli": "bun run bin/context-vault.ts",
+    "test": "bun run src/test-local.ts",
+    "test:redaction": "bun run src/test-redaction.ts"
   },
-  "keywords": ["claude", "claude-code", "secrets", "vault", "proxy", "redaction", "security"],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "secrets",
+    "vault",
+    "proxy",
+    "redaction",
+    "security",
+    "gdpr",
+    "llm-gateway"
+  ],
   "author": "nopoint",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nopointt/claude-vault"
+    "url": "https://github.com/nopointt/context-vault"
   },
+  "bugs": {
+    "url": "https://github.com/nopointt/context-vault/issues"
+  },
+  "homepage": "https://github.com/nopointt/context-vault#readme",
   "engines": {
     "bun": ">=1.0.0"
   },

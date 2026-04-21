@@ -53,7 +53,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     console.log("Registered hooks: secret-store (UserPromptSubmit), pre-tool-use (PreToolUse)");
 
     const claudeIgnorePath = join(process.env.HOME || process.env.USERPROFILE || "", ".claudeignore");
-    const ignoreEntries = [".claude-vault/", "*.key", "*.enc"];
+    const ignoreEntries = [".context-vault/", "*.key", "*.enc"];
     const claudeIgnoreFile = Bun.file(claudeIgnorePath);
     let existing = "";
     if (await claudeIgnoreFile.exists()) {
@@ -62,29 +62,77 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     const missing = ignoreEntries.filter((e) => !existing.includes(e));
     if (missing.length > 0) {
       const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
-      const block = `${separator}\n# claude-vault: prevent Claude from reading secrets\n${missing.join("\n")}\n`;
+      const block = `${separator}\n# context-vault: prevent Claude from reading secrets\n${missing.join("\n")}\n`;
       await Bun.write(claudeIgnorePath, existing + block);
       console.log(`Added ${missing.length} entries to ${claudeIgnorePath}`);
     } else {
       console.log(".claudeignore already configured");
     }
 
-    console.log("Run: claude-vault start");
+    console.log("Run: context-vault start");
   },
 
   async start() {
-    // Run the proxy in-process. The previous implementation spawned a
-    // subprocess (`bun run proxy.ts`) and awaited it, which meant the CLI
-    // command blocked the terminal AND the PID written to proxy.pid
-    // belonged to the subprocess rather than the foreground command the
-    // user could Ctrl-C. In-process keeps a single PID, single log stream,
-    // and straightforward lifecycle (Ctrl-C stops the proxy).
     const pidFile = join(VAULT_DIR, "proxy.pid");
     await Bun.write(pidFile, String(process.pid));
-    console.log(`Proxy starting in-process (PID: ${process.pid})`);
-    // Importing proxy.ts runs its top-level `Bun.serve(...)` which binds
-    // the port and keeps the event loop alive.
-    await import("../src/proxy");
+    console.log(`[context-vault] supervisor starting (PID: ${process.pid})`);
+
+    const proxyPath = join(import.meta.dir, "..", "src", "proxy.ts");
+    const MAX_RESTARTS = 50;
+    const BACKOFF_BASE_MS = 1000;
+    const BACKOFF_MAX_MS = 10000;
+    const BACKOFF_RESET_AFTER_MS = 60000;
+    let restartCount = 0;
+    let lastStartTime = Date.now();
+    let shuttingDown = false;
+    let activeChild: ReturnType<typeof Bun.spawn> | null = null;
+
+    const cleanup = async () => {
+      shuttingDown = true;
+      console.log("[context-vault] supervisor shutting down");
+      if (activeChild) {
+        activeChild.kill("SIGTERM");
+        const timeout = setTimeout(() => {
+          if (activeChild) activeChild.kill("SIGKILL");
+        }, 2000);
+        await activeChild.exited;
+        clearTimeout(timeout);
+      }
+      await Bun.write(pidFile, "");
+      process.exit(0);
+    };
+
+    process.on("SIGTERM", cleanup);
+    process.on("SIGINT", cleanup);
+
+    while (!shuttingDown) {
+      activeChild = Bun.spawn([process.execPath, "run", proxyPath], {
+        stdio: ["inherit", "inherit", "inherit"],
+        env: { ...process.env },
+      });
+
+      lastStartTime = Date.now();
+      const exitCode = await activeChild.exited;
+      activeChild = null;
+
+      if (shuttingDown) break;
+
+      if (Date.now() - lastStartTime > BACKOFF_RESET_AFTER_MS) {
+        restartCount = 0;
+      }
+
+      restartCount++;
+      if (restartCount > MAX_RESTARTS) {
+        console.error(`[context-vault] proxy exceeded ${MAX_RESTARTS} rapid restarts, stopping supervisor`);
+        break;
+      }
+
+      const backoff = Math.min(BACKOFF_BASE_MS * restartCount, BACKOFF_MAX_MS);
+      console.log(`[context-vault] proxy exited (code ${exitCode}), restarting in ${backoff}ms (${restartCount}/${MAX_RESTARTS})`);
+      await Bun.sleep(backoff);
+    }
+
+    await Bun.write(pidFile, "");
   },
 
   async stop() {
@@ -107,8 +155,8 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   async add() {
     const name = args[0];
     if (!name) {
-      console.error("Usage: claude-vault add <name>");
-      console.error("  Reads value from stdin or ~/.claude-vault/buffer.txt");
+      console.error("Usage: context-vault add <name>");
+      console.error("  Reads value from stdin or ~/.context-vault/buffer.txt");
       process.exit(1);
     }
 
@@ -155,7 +203,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   async remove() {
     const name = args[0];
     if (!name) {
-      console.error("Usage: claude-vault remove <name>");
+      console.error("Usage: context-vault remove <name>");
       process.exit(1);
     }
     const deleted = await vaultDelete(name);
@@ -173,7 +221,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 };
 
 if (!command || !(command in COMMANDS)) {
-  console.log("claude-vault — protect secrets from Claude Code transcripts\n");
+  console.log("context-vault — protect secrets from Claude Code transcripts\n");
   console.log("Commands:");
   console.log("  init     Initialize vault + register in Claude Code settings");
   console.log("  start    Start the proxy server");

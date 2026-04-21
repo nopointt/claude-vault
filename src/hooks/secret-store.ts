@@ -21,7 +21,7 @@ const value = await readBuffer();
 if (!value) {
   const output = {
     decision: "block",
-    reason: `No value found in buffer.txt. Paste your secret into ~/.claude-vault/buffer.txt first, then re-run /secret ${name}`,
+    reason: `No value found in buffer.txt. Paste your secret into ~/.context-vault/buffer.txt first, then re-run /secret ${name}`,
   };
   console.log(JSON.stringify(output));
   process.exit(0);

@@ -64,7 +64,7 @@ if (missing.length > 0) {
   // syntax to external systems (files on disk, HTTP requests, etc).
   const output = {
     decision: "block",
-    reason: `claude-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: claude-vault add <name>. Run \`claude-vault list\` to see stored secrets.`,
+    reason: `context-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: context-vault add <name>. Run \`context-vault list\` to see stored secrets.`,
   };
   console.log(JSON.stringify(output));
   process.exit(0);
