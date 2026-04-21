@@ -1,7 +1,7 @@
 ---
 # context-vault-backlog.md — Bug Audit + Tech Debt
 > Layer: L2.5 | Frequency: medium | Loaded: when triaging V-0X epics
-> Last updated: 2026-04-21 (V-02/V-03/V-04 complete, 26 resolved)
+> Last updated: 2026-04-21 (ALL EPICS COMPLETE, 42/42 resolved)
 ---
 
 ## Bug Inventory (24 findings, 22 resolved)
@@ -31,15 +31,9 @@ Legend: severity = **CRIT** (data loss / crash) · **HIGH** (functional bug) · 
 - **B-23** ~~wipeBuffer silently swallows ALL errors~~ → RESOLVED V-03. ENOENT = OK, others logged.
 - **B-24** ~~secret-store.ts leaks secret length~~ → RESOLVED V-03. Removed `${value.length} chars`.
 
-### REMAINING (2)
-
-**B-05 — Stale module cache after edit** (LOW docs) → **V-05**
-- Fix: document "restart proxy after edits" in README troubleshooting section
-
-**B-12 — redactString linear scan** (LOW perf, proxy.ts) → **V-06**
-- O(N × text_length) per call. Fine at N<50. Defer until perf matters.
-
-~~**B-06 — Stale /tmp/vault-proxy.log**~~ → N/A. No log file exists; stdout-only logging. Non-issue.
+- **B-05** ~~Stale module cache after edit~~ → RESOLVED V-05. Documented restart requirement in README troubleshooting.
+- **B-06** ~~Stale /tmp/vault-proxy.log~~ → N/A. No log file exists; stdout-only logging.
+- **B-12** ~~redactString linear scan~~ → RESOLVED V-06. First-char set early exit + longest-first sort.
 
 ---
 
@@ -66,12 +60,10 @@ Legend: severity = **CRIT** (data loss / crash) · **HIGH** (functional bug) · 
 - **TD-14** ~~README no diagram~~ → RESOLVED V-05. ASCII flow diagram present.
 - **TD-15** ~~No npm badges~~ → RESOLVED V-05. CI + npm + license badges.
 
-### REMAINING (4, all LOW/deferred)
-
-- **TD-13** No metrics endpoint — partially addressed by /health. Defer.
-- **TD-16** engines only bun → N/A (bun-only by design).
-- **TD-17** No release automation (MED) → future. GitHub Actions release workflow.
-- **TD-18** No detached mode Windows → PARTIALLY ADDRESSED by supervisor. Full detach deferred.
+- **TD-13** ~~No metrics endpoint~~ → RESOLVED V-06. `/metrics` endpoint with counters, memory, cache age.
+- **TD-16** ~~engines only bun~~ → N/A (bun-only by design).
+- **TD-17** ~~No release automation~~ → RESOLVED V-07. GitHub Actions release.yml publishes on tag push.
+- **TD-18** ~~No detached mode Windows~~ → RESOLVED V-06. `context-vault start --detach` spawns background supervisor.
 
 ---
 
@@ -94,19 +86,18 @@ Legend: severity = **CRIT** (data loss / crash) · **HIGH** (functional bug) · 
 | **V-03 Security** | ✅ COMPLETE | ~~B-10~~, ~~B-13~~, ~~B-14~~, ~~B-22~~, ~~B-23~~, ~~B-24~~, ~~TD-05~~, ~~TD-06~~ |
 | **V-04 Observability** | ✅ COMPLETE | ~~B-11~~, ~~B-17~~, ~~TD-12~~, B-06 (N/A) |
 | **V-05 GTM** | ✅ COMPLETE | ~~B-05~~, ~~TD-07~~, ~~TD-14~~, ~~TD-15~~ |
-| **V-06 Advanced** | DEFERRED | B-12 |
-| **V-07 Test + CI** | ✅ COMPLETE | ~~TD-01~~, ~~TD-02~~, ~~TD-04~~, ~~TD-08~~, TD-17 (future) |
-| **RESOLVED** | — | 38 items total |
+| **V-06 Advanced** | ✅ COMPLETE | ~~B-12~~, ~~TD-13~~, ~~TD-18~~ |
+| **V-07 Test + CI** | ✅ COMPLETE | ~~TD-01~~, ~~TD-02~~, ~~TD-04~~, ~~TD-08~~, ~~TD-17~~ |
+| **RESOLVED** | — | 42 items total |
 
 ---
 
-## Priority Queue
+## Priority Queue — ALL COMPLETE ✅
 
-1. ~~**PRE-LAUNCH** — ALL RESOLVED~~ ✅
+1. ~~**PRE-LAUNCH**~~ ✅
 2. ~~**V-03** — security hardening~~ ✅
 3. ~~**V-02** — resilience~~ ✅
 4. ~~**V-04** — observability~~ ✅
 5. ~~**V-07** — tests + CI~~ ✅
 6. ~~**V-05** — GTM docs~~ ✅
-7. **V-06** — B-12 perf optimization (deferred, fine at N<50)
-8. **Remaining:** TD-13 (metrics), TD-17 (release automation), TD-18 (Windows detached) — all deferred
+7. ~~**V-06** — advanced~~ ✅

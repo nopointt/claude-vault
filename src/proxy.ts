@@ -27,7 +27,17 @@ const PASSTHROUGH_HEADERS = [
 type VaultEntry = { name: string; value: string; placeholder: string };
 
 let cachedSecrets: VaultEntry[] = [];
+let cachedFirstChars: Set<string> = new Set();
 let cacheTime = 0;
+
+const metrics = {
+  requestsTotal: 0,
+  requestsMessages: 0,
+  requestsCountTokens: 0,
+  redactionsPerformed: 0,
+  upstreamErrors: 0,
+  startedAt: Date.now(),
+};
 
 async function loadSecrets(): Promise<VaultEntry[]> {
   const now = Date.now();
@@ -41,12 +51,20 @@ async function loadSecrets(): Promise<VaultEntry[]> {
       name,
       value,
       placeholder: `<<VAULT:${name}>>`,
-    }));
+    }))
+    .sort((a, b) => b.value.length - a.value.length);
+  cachedFirstChars = new Set(cachedSecrets.map((s) => s.value[0]));
   cacheTime = now;
   return cachedSecrets;
 }
 
 function redactString(text: string, secrets: VaultEntry[]): string {
+  if (secrets.length === 0) return text;
+  let hasAnyFirstChar = false;
+  for (const ch of cachedFirstChars) {
+    if (text.includes(ch)) { hasAnyFirstChar = true; break; }
+  }
+  if (!hasAnyFirstChar) return text;
   let result = text;
   for (const secret of secrets) {
     if (result.includes(secret.value)) {
@@ -118,8 +136,8 @@ async function handleMessages(req: Request): Promise<Response> {
     isStreaming = false;
   }
 
-  const redactedCount = (bodyText.length - redactedBody.length);
-  if (redactedCount > 0) {
+  if (bodyText.length !== redactedBody.length) {
+    metrics.redactionsPerformed++;
     console.log(`[context-vault] redacted ${secrets.length} secret pattern(s) from request`);
   }
 
@@ -132,6 +150,7 @@ async function handleMessages(req: Request): Promise<Response> {
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch (err) {
+    metrics.upstreamErrors++;
     console.error(`[context-vault] upstream error:`, err);
     return new Response(JSON.stringify({ error: "Proxy failed to reach Anthropic API" }), {
       status: 502,
@@ -244,6 +263,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
   const redactedBody = redactString(bodyText, secrets);
 
   if (bodyText.length !== redactedBody.length) {
+    metrics.redactionsPerformed++;
     console.log(`[context-vault] redacted secret(s) from count_tokens request`);
   }
 
@@ -256,6 +276,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
       signal: AbortSignal.timeout(COUNT_TOKENS_TIMEOUT_MS),
     });
   } catch (err) {
+    metrics.upstreamErrors++;
     console.error(`[context-vault] count_tokens upstream error:`, err);
     return new Response(JSON.stringify({ error: "Proxy failed to reach Anthropic API" }), {
       status: 502,
@@ -274,12 +295,16 @@ async function handleCountTokens(req: Request): Promise<Response> {
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
 
+  metrics.requestsTotal++;
+
   if (url.pathname === "/v1/messages" && req.method === "POST") {
+    metrics.requestsMessages++;
     console.log(`[context-vault] POST /v1/messages`);
     return handleMessages(req);
   }
 
   if (url.pathname === "/v1/messages/count_tokens" && req.method === "POST") {
+    metrics.requestsCountTokens++;
     console.log(`[context-vault] POST /v1/messages/count_tokens`);
     return handleCountTokens(req);
   }
@@ -290,6 +315,16 @@ async function handleRequest(req: Request): Promise<Response> {
       version: "0.2.0",
       uptime: Math.floor(process.uptime()),
       secrets: cachedSecrets.length,
+    }), { headers: { "content-type": "application/json" } });
+  }
+
+  if (url.pathname === "/metrics" && req.method === "GET") {
+    return new Response(JSON.stringify({
+      ...metrics,
+      uptimeSeconds: Math.floor(process.uptime()),
+      secretsLoaded: cachedSecrets.length,
+      cacheAgeMs: Date.now() - cacheTime,
+      memoryUsageMB: Math.round(process.memoryUsage.rss() / 1024 / 1024),
     }), { headers: { "content-type": "application/json" } });
   }
 

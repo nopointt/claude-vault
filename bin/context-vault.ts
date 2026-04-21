@@ -73,6 +73,18 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   },
 
   async start() {
+    if (args.includes("--detach")) {
+      const logFile = join(VAULT_DIR, "proxy.log");
+      const out = Bun.file(logFile).writer();
+      const child = Bun.spawn([process.execPath, "run", import.meta.path, "start"], {
+        stdio: ["ignore", out, out],
+        env: { ...process.env },
+      });
+      child.unref();
+      console.log(`[context-vault] detached supervisor (PID: ${child.pid}), log: ${logFile}`);
+      process.exit(0);
+    }
+
     const pidFile = join(VAULT_DIR, "proxy.pid");
     await Bun.write(pidFile, String(process.pid));
     console.log(`[context-vault] supervisor starting (PID: ${process.pid})`);
@@ -236,7 +248,7 @@ if (!command || !(command in COMMANDS)) {
   console.log("context-vault — protect secrets from Claude Code transcripts\n");
   console.log("Commands:");
   console.log("  init     Initialize vault + register in Claude Code settings");
-  console.log("  start    Start the proxy server");
+  console.log("  start [--detach]  Start the proxy server (--detach runs in background)");
   console.log("  stop     Stop the proxy server");
   console.log("  add NAME Add a secret (from buffer.txt or stdin)");
   console.log("  remove NAME  Remove a secret");
