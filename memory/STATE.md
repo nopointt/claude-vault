@@ -72,21 +72,26 @@
 - **D-V01-10:** Bug audit preserves all findings (B-01..B-17) in `contexter-vault-backlog.md` — not silently fixed in V-01. Each gets explicit V-02+ epic assignment.
 
 ## Blockers
-- ✅ **npm name `context-vault` taken** (resolved D-42: renamed to `contexter-vault`)
-- ✅ **v0.2.0 unreleased** (resolved: 10 commits + tag pushed; awaiting `npm publish` only)
-- ✅ **B-18 SSE outer try/catch missing** (resolved PRE-LAUNCH)
-- **Proxy running from stale location**: Current proxy process (PID 7232 from session 97328fa5 killed during move; a second proxy at PID b14zdtnrf was spawned by worktree session per nopoint screenshot #2) runs from `nospace/tools/claude-vault/src/proxy.ts`, NOT from new `development/contexter-vault/`. After V-01 commits: kill running proxy, restart from new location.
-- **Directory rename blocked by own cwd**: `development/context-vault/` cannot be renamed while this Claude session holds it as cwd. Manual step for nopoint: close session → Rename-Item → start new session in renamed dir.
-- **GitHub repo rename requires UI action**: cannot be done from CLI. Pre-updated git remote URL will fail push until done.
-- **Compromised npm tokens awaiting revoke**: `npm_XjcXAFWK...` + `npm_GwkztM1f...` — both transited Anthropic API via chat, nopoint to revoke both.
-- **Old directory still at `tools/claude-vault/`**: kept per G1 (never delete). nopoint cleans manually after verification. Do NOT `rm -rf`.
-- **GitHub repo not yet renamed**: nopoint must rename `nopointt/claude-vault → nopointt/contexter-vault` via GitHub Settings UI. GitHub auto-creates 301 redirect from old URL.
-- **npm publish not done**: V-01 W5 gates on successful `bun publish --dry-run`. Also requires `npm adduser` first-time (publisher account may not exist).
-- **LICENSE + tsconfig.json unreviewed**: deferred to V-01 W5 publish prep (per recovery §L).
-- **Test suite is smoke + tautology bugs**: B-01 (test-redaction.ts tautology), B-02 (test-local.ts tautology), B-03 (seed.ts stores placeholder as value). Deferred to V-02.
-- **ANTHROPIC_BASE_URL source mystery** (per recovery addendum §B): var kept reappearing in env even after removal from settings.json. Unresolved — not in Windows env/registry/.vscode/PowerShell profile. May come from Claude Code internal. Assumed: settings.json is authoritative; re-added there per D-V01 re-enable.
-- **Low C: drive disk** (~2.2 GB free per recovery §I): disk-check.sh blocks heavy ops. Not blocking V-01 but operational risk.
-- **Socket errors in current session** (~235K tokens): proxy falls on very large request bodies + context. Retry works most of the time. Full fix requires V-02 supervisor-worker split.
+
+### Active (Day 0 blockers — 2026-04-22 13:00 UTC)
+- **Blog post #1 FAIL verdict**: 14 em-dashes in 35 prose lines (40% density) + "just use" condescending minimizer per `contexter-vault check --surface blog`. Publish slot is Day 2 (24.04). Needs rewrite in fresh session morning of 2026-04-22.
+- **Twitter thread WARN**: 8 em-dashes across 11 tweets (17% density). Publish slot is Day 0+3 (25.04). Lighter fix than blog.
+- **GitHub Discussions not enabled**: required per Langfuse pattern (GitHub Discussions as community hub = star retention). 2-minute UI action.
+- **GitHub repo topics not tagged**: required for GitHub discovery. 7 topics: `claude-code`, `claude-code-proxy`, `ai-security`, `secrets-management`, `bun`, `mcp-security`, `llm-proxy`. 2-minute UI action.
+- **HN / Reddit karma 1** on account `nopointtttt`: AutoMod-hold risk. Warmup ongoing (HN #5 posted + visible). Target: 10-30 karma by T-0 via organic commenting.
+
+### Resolved this session
+- ✅ **Proxy stale location + PID conflict**: proxy running from new `development/contexter-vault/` location confirmed via Hetzner Docker smoke test (`bun install -g contexter-vault` clean install + binary spawns).
+- ✅ **GitHub repo rename `nopointt/claude-vault → nopointt/contexter-vault`**: done by nopoint via UI (push works through 301 redirect).
+- ✅ **Compromised npm tokens revoke**: dropped per nopoint decision ("пофиг — убери задачу"). Monitoring for anomalous npm activity is sufficient.
+- ✅ **npm publish**: resolved session 3, v0.2.0 live.
+- ✅ **LICENSE + tsconfig review**: resolved session 3 PRE-LAUNCH.
+
+### Carried (non-blocking for V-09 launch)
+- **Directory `development/context-vault/` → `contexter-vault/` rename**: still pending local OS-level move. Axis routing works on current path. Non-blocking.
+- **Test suite tautology bugs**: B-01, B-02, B-03 in test-*.ts. Deferred to V-02.
+- **ANTHROPIC_BASE_URL source mystery** (per recovery addendum §B): unresolved. Assumption: settings.json is authoritative.
+- **Socket errors in long Claude Code sessions** (~235K+ tokens): supervisor-worker split in V-02 will fix. Workaround: retry.
 
 ## Deferred / Upcoming
 - ✅ V-02..V-07 all COMPLETE in v0.2.0
@@ -96,19 +101,23 @@
 ## Metrics
 - Version: 0.2.0 (PUBLISHED 2026-04-21 13:22 UTC)
 - npm: https://www.npmjs.com/package/contexter-vault — maintainer `nopoint`, 18 files, 60.9 KB unpacked
-- GitHub: github.com/nopointt/claude-vault (UI rename pending); git remote pre-updated to contexter-vault.git
+- GitHub: github.com/nopointt/contexter-vault (repo renamed by nopoint; old claude-vault URL serves 301 redirect)
 - Tests: 36 pass (Bun test runner)
 - CI: GitHub Actions ci.yml + release.yml configured
-- Backlog: 42/42 resolved (ALL closed)
-- Sessions: 3
+- Backlog: 42/42 resolved (ALL closed from V-01..V-07 scope)
+- Sessions: 4
 - License: MIT
 - Dependencies: 0 runtime deps + `@types/bun` devDep (minimal surface area)
 - Runtime: Bun ≥1.0.0
-- Source files: 9 (`src/crypto.ts`, `src/vault.ts`, `src/proxy.ts`, `src/seed.ts`, `src/test-local.ts`, `src/test-redaction.ts`, `src/hooks/secret-store.ts`, `src/hooks/pre-tool-use.ts`, `bin/contexter-vault.ts`)
-- Code lines: ~500 (not counted precisely; proxy.ts ~256, vault.ts ~100, bin ~189, hooks ~150)
-- Test coverage: smoke tests only, tautology bugs in test-redaction.ts + test-local.ts (B-01/B-02)
+- Source files (pre-factcheck): 9 (`src/crypto.ts`, `src/vault.ts`, `src/proxy.ts`, `src/seed.ts`, `src/test-local.ts`, `src/test-redaction.ts`, `src/hooks/secret-store.ts`, `src/hooks/pre-tool-use.ts`, `bin/contexter-vault.ts`)
+- Source files (factcheck, session 4 add): 6 (`src/factcheck/types.ts`, `claim-extractor.ts`, `tropes.ts`, `tov.ts`, `logic.ts`, `check.ts`)
+- Brand: `brand/tov.md` v1.0 CANONICAL (4 pillars, 600 lines)
+- Code lines total: ~1500 (proxy ~256, vault ~100, bin ~240 with check subcommand, hooks ~150, factcheck ~700)
+- Test coverage: smoke tests only, tautology bugs in test-redaction.ts + test-local.ts (B-01/B-02). Factcheck module has no tests yet (MVP).
 - Encryption: AES-256-GCM (Node.js native crypto via node:crypto)
 - Port: 9277 (configurable via `CONTEXT_VAULT_PORT`)
-- Bugs catalogued: 24 (B-01..B-24, 22 resolved + B-05 resolved V-05 + B-12 resolved V-06; 0 remaining)
-- Tech debt items: 18 (16 resolved, 2 deferred: TD-16 bun-only by design, TD-18 partial)
-- Commits: 10 this session, all pushed (last: `4ee0205` full rebrand)
+- Bugs catalogued: 24 (22 resolved, 2 deferred pre-session-4). New session-4 bugs: 0.
+- Tech debt items: 18 (16 resolved, 2 deferred: TD-16 bun-only by design, TD-18 partial). New tech debt session-4: factcheck module untested.
+- Commits total on main: 15+ (session 4 added 5: 3203127 README, 21be105 V-08/V-09 planning, 9d3bb65 factcheck+TOV, c88dfc4 launch assets, 1164373 close)
+- Research artifacts (nospace/docs/research/): 4 (contexter-vault-gtm-platforms-research.md, contexter-vault-launch-tactics-deep-research.md, contexter-vault-hn-voice-research.md, ai-detection-tools-research.md)
+- Global rules updated session 4: `~/.claude/reglaments/fact-check.md` (new), `~/.claude/rules/standards.md` (E6 added — 58 standards total), `~/.claude/agents/factcheck-agent.md` (new Sonnet subagent)

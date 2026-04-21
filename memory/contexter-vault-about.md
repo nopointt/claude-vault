@@ -154,11 +154,19 @@ All three managed by `contexter-vault init`.
 |---|---|
 | `memory/contexter-vault-about.md` (L1) | Axis — structural changes |
 | `memory/contexter-vault-roadmap.md` (L2) | Axis — epic/stage status |
-| `memory/contexter-vault-v1.md` (L3, V-01 active) | Axis — epic progress |
+| `memory/contexter-vault-v1.md` (L3, V-01..V-07 shipped) | Axis — epic progress |
+| `memory/contexter-vault-v8.md` (L3, V-08 Desktop Coverage planned) | Axis — epic progress |
+| `memory/contexter-vault-v9.md` (L3, V-09 GTM Launch NEXT) | Axis — epic progress |
+| `memory/contexter-vault-v9-execution-plan.md` | Axis — Day 0-90 actionable timeline |
+| `memory/contexter-vault-v9-launch-assets.md` | Axis — HN/Reddit/blog/Twitter/awesome-lists drafts |
+| `memory/contexter-vault-v9-warmup-cheatsheet.md` | Axis — 10 HN warmup comments EN+RU |
+| `memory/contexter-vault-v9-reddit-warmup-cheatsheet.md` | Axis — 8 Reddit warmup comments EN+RU |
 | `memory/contexter-vault-backlog.md` (L2.5) | Axis — bug audit + tech debt + deferred items |
 | `memory/chronicle/contexter-vault-current.md` | Axis — append only |
 | `memory/chronicle/index.md` | Axis — append only |
 | `memory/session-scratch.md` (L4) | Axis — write during session |
+| `brand/tov.md` (brand canonical) | Axis — TOV v1.0, 4 pillars, AI Editor Persona |
+| `src/factcheck/*.ts` (product code) | Axis or G3 Player — fact-check pipeline |
 
 ## G3 Rule
 
