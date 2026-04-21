@@ -13,26 +13,39 @@ if (parsed.tool_name !== "Bash") {
 }
 
 const command = parsed.tool_input?.command ?? "";
-const placeholders = command.matchAll(/<<VAULT:([^>]+)>>/g);
+const placeholders = [...command.matchAll(/<<VAULT:([^>]+)>>/g)];
+
+if (placeholders.length === 0) {
+  process.exit(0);
+}
 
 let updatedCommand = command;
-let substituted = false;
+const missing: string[] = [];
 
 for (const match of placeholders) {
   const name = match[1];
   const value = await vaultGet(name);
   if (value) {
     updatedCommand = updatedCommand.replaceAll(`<<VAULT:${name}>>`, value);
-    substituted = true;
+  } else if (!missing.includes(name)) {
+    missing.push(name);
   }
 }
 
-if (substituted) {
+if (missing.length > 0) {
+  // Block rather than let the literal <<VAULT:name>> placeholder hit the
+  // shell — that would at best run a broken command, at worst leak the
+  // placeholder syntax to external systems.
   const output = {
-    decision: "approve",
-    updatedInput: { command: updatedCommand },
+    decision: "block",
+    reason: `claude-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: claude-vault add <name>. Run \`claude-vault list\` to see stored secrets.`,
   };
   console.log(JSON.stringify(output));
-} else {
   process.exit(0);
 }
+
+const output = {
+  decision: "approve",
+  updatedInput: { command: updatedCommand },
+};
+console.log(JSON.stringify(output));
