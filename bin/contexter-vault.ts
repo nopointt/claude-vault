@@ -242,6 +242,52 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     console.log(`Secrets: ${keys.length}`);
     console.log(`Proxy: ${proxyStatus}`);
   },
+
+  async check() {
+    const { runCheck, formatReport } = await import("../src/factcheck/check");
+    let text: string;
+    let surface: "readme" | "cli" | "error" | "blog" | "post" | "release" | "reply" = "post";
+    let format: "json" | "markdown" = "markdown";
+    let filePath: string | undefined;
+
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "--stdin") {
+        // read stdin below
+      } else if (a === "--format") {
+        const next = args[i + 1];
+        if (next === "json" || next === "markdown") {
+          format = next;
+          i++;
+        }
+      } else if (a === "--surface") {
+        const next = args[i + 1];
+        if (next === "readme" || next === "cli" || next === "error" || next === "blog" || next === "post" || next === "release" || next === "reply") {
+          surface = next;
+          i++;
+        }
+      } else if (!a.startsWith("--")) {
+        filePath = a;
+      }
+    }
+
+    if (args.includes("--stdin") || !filePath) {
+      const chunks: Buffer[] = [];
+      for await (const chunk of Bun.stdin.stream()) chunks.push(Buffer.from(chunk));
+      text = Buffer.concat(chunks).toString("utf-8");
+    } else {
+      text = await Bun.file(filePath).text();
+    }
+
+    if (!text || text.trim().length === 0) {
+      console.error("check: no input text (provide a file path or pipe via --stdin)");
+      process.exit(2);
+    }
+
+    const report = runCheck(text, { surface });
+    console.log(formatReport(report, format));
+    process.exit(report.overall === "fail" ? 2 : report.overall === "warn" ? 1 : 0);
+  },
 };
 
 if (!command || !(command in COMMANDS)) {
@@ -254,6 +300,8 @@ if (!command || !(command in COMMANDS)) {
   console.log("  remove NAME  Remove a secret");
   console.log("  list     List stored secrets");
   console.log("  status   Show vault status");
+  console.log("  check [file] [--stdin] [--format json|markdown] [--surface readme|cli|error|blog|post|release|reply]");
+  console.log("           Fact / AI-tell / TOV pre-publish check on content before publishing");
   process.exit(command ? 1 : 0);
 }
 
