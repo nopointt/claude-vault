@@ -200,3 +200,5 @@ Owned by V-08 L3 (`contexter-vault-v8.md`). V-09 cannot hard-launch without it.
 ## Decision Log (append-only)
 
 - **2026-04-21:** V-09 created. 6 D-V09 decisions locked. 9 phases P1-P9. Target 5K stars / 90 days.
+- **2026-04-22 (session 4):** P1 narrative lock DONE. P2 asset production ~80% done — HN post (3 titles, body, first-reply, 5 objection responses), 7 Reddit drafts (per-sub tailored, em-dash-clean after TOV audit), 5 awesome-list submissions, console.dev email, blog post #1 draft (needs rewrite — FAIL verdict for em-dash abuse), 11-tweet Twitter thread. HN warmup #5 posted (Laws of SE, visible). Warmup cheatsheets created: 10 HN + 8 Reddit comments in EN+RU. Brand TOV v1.0 CANONICAL published at `brand/tov.md`. Fact-check pipeline MVP shipped (tool + reglament + agent). D-V09-10..23 locked.
+- **Open for Day 0 morning sprint:** blog #1 rewrite, Twitter light fix, nopoint GitHub UI (Discussions+topics), P5 hard launch execution at T-0 13:00 UTC.

@@ -4,13 +4,16 @@
 - **Phase:** V-01..V-07 ✅ COMPLETE. **V-08 + V-09 PLANNED.**
 - **Current focus:** 🎯 **V-09 GTM Launch Execution — 5K Stars campaign (90 days).** V-08 Desktop Coverage runs in parallel to double addressable market before hard launch.
 - **Status:** `contexter-vault@0.2.0` LIVE on https://www.npmjs.com/package/contexter-vault. Product shipped, polished, tested, documented. Ready for launch. Manual OS-level items deferred to nopoint (dir rename, GitHub repo rename, proxy migration).
-- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #3 — npm publish live)
-- **Current session:** 2026-04-21 (Axis, session 4 — V-08 + V-09 epics planned, GTM focus activated)
+- **Last session:** 2026-04-22 (Axis, session 4 CLOSE — TOV v1.0 + fact-check tool MVP + all Day 0 launch assets + warmup cheatsheets HN+Reddit)
 - **Sessions total:** 4
-- **Next (Axis — planning work):**
-  1. Create L3 file `contexter-vault-v9.md` with detailed GTM execution spec (narrative, assets, channels, timeline)
-  2. Create L3 file `contexter-vault-v8.md` with Desktop MITM spec (smoke test → native TLS vs mitmproxy decision → CA install helper)
-  3. Produce V-09 launch assets: demo GIF, landing page copy, 3 blog drafts, HN post variants, Twitter thread, press kit, comparison table
+- **Next (Axis — Day 0 sprint, fresh session morning 2026-04-22 via /continueaxis):**
+  1. Blog post #1 rewrite (FAIL verdict — 14 em-dashes in 35 lines + "just use" minimizer)
+  2. Twitter thread lighter fix (8 em-dashes across 11 tweets)
+  3. T-1h warmup (remaining HN #1-4, Reddit R1-R3 per cheatsheet)
+  4. T-0 2026-04-22 13:00 UTC — HN Show HN submit
+  5. T+2m r/ClaudeAI, T+5m r/LocalLLaMA, T+10m Claude Discord (coordinated wave)
+  6. T+1h — awesome-list submissions (hesreallyhim Issue + 4 PRs) + console.dev email
+  7. T+4h r/netsec, T+6h r/privacy, T+8h r/selfhosted, T+10h r/sideproject
 - **Next (nopoint — manual, non-blocking):**
   - Revoke 2 compromised npm tokens (`npm_XjcX…`, `npm_Gwkz…`)
   - Rename local dir `development/context-vault/` → `contexter-vault/`
@@ -19,6 +22,7 @@
   - Generate fresh granular NPM_TOKEN → GitHub Secrets → release.yml automation
 
 ## Key Completions
+- **Session 4 (2026-04-22):** Brand TOV v1.0 CANONICAL (4 pillars Precise/Direct/Honest-about-tradeoffs/No-hype, Harkly-adapted for dev audience, HN-research-backed examples). Fact-check pipeline MVP shipped: `contexter-vault check` subcommand (claim extract + tropes.fyi patterns + TOV compliance + logic heuristics) + external Sonnet factcheck-agent for WebSearch verification + `~/.claude/reglaments/fact-check.md` reglament + E6 standard added. 4 research artifacts (GTM platforms SEED, Day 0 launch tactics DEEP, HN voice, AI detection tools). All V-09 launch assets drafted: HN Show HN (title+body+first-reply+5 objection responses), 7 Reddit drafts per-sub tailored, 5 awesome-list submissions, console.dev email, blog post #1, 11-tweet Twitter thread. Warmup cheatsheets: 10 HN comments + 8 Reddit comments in EN+RU format. Re-audit via tool: all Reddit drafts 0 AI tells / 0 TOV violations after em-dash fixes. HN warmup #5 posted (Laws of SE thread, visible). Commits: 9d3bb65 (tool+TOV) + c88dfc4 (launch assets). Context at close ~680K.
 - **Session 3 (2026-04-21):** `contexter-vault@0.2.0` PUBLISHED on npm (granular token with Bypass 2FA). Axis skill routing (4 files) + `axis-active` + git remote URL migrated to `contexter-vault`. Rename of on-disk directory deferred (Windows cwd hold).
 - **Session 2 (2026-04-21):** All 42 backlog items resolved (V-02 Resilience, V-03 Security, V-04 Observability, V-05 GTM, V-06 Advanced, V-07 Tests+CI). 36 unit tests (Bun test). GitHub Actions CI + release workflows. Full rebrand context-vault→contexter-vault. `v0.2.0` tag pushed.
 - Package rename: claude-vault → contexter-vault v0.2.0 (package.json, bin/, all src/*, all hooks)
@@ -32,6 +36,20 @@
 - `~/.claudeignore` updated: `.contexter-vault/` added, `.claude-vault/` kept for transition
 
 ## Active Decisions
+
+### V-09 GTM Launch (session 4)
+
+- **D-V09-10..15 (TOV v1.0 CANONICAL):** 4 pillars — Precise / Direct / Honest-about-tradeoffs / No-hype. Harkly tov.md v3 adapted for senior-dev audience. Bauhaus Sparsamkeit + Инфостиль as philosophical anchor. English-only. Surface-aware tone (README/CLI/blog/post/etc). AI Editor Persona (8-layer system prompt). File: `brand/tov.md`.
+- **D-V09-16 (Fact-check pipeline):** split between local pattern-match tool (`contexter-vault check` subcommand: claim extraction + tropes + TOV + logic) and external Sonnet factcheck-agent (WebSearch-based claim verification, incremental file writes per E6). Reglament `~/.claude/reglaments/fact-check.md` formalizes workflow.
+- **D-V09-17 (AI detection):** Binoculars rejected — over-engineering for Bun/npm stack (requires 28GB GPU + Python). All detectors cap at ~62% true-positive on human-edited AI text per NeurIPS 2025 research. Pattern-match against tropes.fyi catalog + TOV discipline is the realistic defense. Originality.ai REST V3 ($0.10/1K words) reserved as optional V2 layer.
+- **D-V09-18 (HN title):** `Show HN: contexter-vault – open-source secret redaction for Claude Code` (68 chars, 7 words descriptor, Langfuse pattern, security-framed). Backup Option B: Infisical pattern. Option C CVE-anchored for security-narrower reach if Day 0 moves to r/netsec-first.
+- **D-V09-19 (HN body + first-reply):** body opens with pain point (not product). First-reply uses markepear.dev 7-step framework — personal intro → tool summary → problem + why matters → backstory → technical solution → differentiation vs mitmproxy/DIY → explicit feedback invitation.
+- **D-V09-20 (Warmup strategy):** EN+RU cheatsheet format for both HN (10 comments) and Reddit (8 comments). Cheatsheets on Desktop + in memory/. 20-30 min pause between comments. Reddit: ≤2 per sub per 24h, 10min rate limit per sub for low-karma accounts.
+- **D-V09-21 (Framing):** avoid "AI" label on HN/Reddit post titles. Security / privacy / developer-utility framings preferred (sturdystatistics State of Show HN 2025: AI-labeled posts underperform, OSS p=0.088 of >100pts).
+- **D-V09-22 (Day 0 schedule):** 2026-04-22 13:00 UTC = T-0. Tier-1/2 targets only. HN → r/ClaudeAI (+2m) → r/LocalLLaMA (+5m) → Claude Discord (+10m) → awesome-list submissions + console.dev (+1h) → r/netsec (+4h) → r/privacy (+6h) → r/selfhosted (+8h) → r/sideproject (+10h).
+- **D-V09-23 (Em-dash abuse):** TOV rule — em-dashes in body prose limited to >15% density triggers WARN. Blog post #1 FAILs on this (40% density, 14 em-dashes in 35 lines); needs full rewrite with comma/period/parens replacements.
+
+### Historical
 - **D-52:** Axis skill routing files (startaxis/closeaxis/checkpointaxis/continueaxis) + axis-active migrated to project name `contexter-vault`. Paths in skill tables point to `development/contexter-vault/` — will break Axis until nopoint renames on-disk dir.
 - **D-51:** GitHub repo rename deferred (requires UI). Git remote URL pre-updated to `nopointt/contexter-vault.git` — push fails until GitHub rename completed.
 - **D-50:** Directory `development/context-vault/` on-disk rename blocked by Windows cwd hold. Manual step for nopoint after session close.
