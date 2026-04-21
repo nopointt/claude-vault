@@ -49,7 +49,26 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     settings.env = envVars;
 
     await Bun.write(settingsPath, JSON.stringify(settings, null, 2));
-    console.log(`Set ANTHROPIC_BASE_URL=http://localhost:9277 in ${settingsPath}`);
+    console.log(`Set ANTHROPIC_BASE_URL=http://127.0.0.1:9277 in ${settingsPath}`);
+    console.log("Registered hooks: secret-store (UserPromptSubmit), pre-tool-use (PreToolUse)");
+
+    const claudeIgnorePath = join(process.env.HOME || process.env.USERPROFILE || "", ".claudeignore");
+    const ignoreEntries = [".claude-vault/", "*.key", "*.enc"];
+    const claudeIgnoreFile = Bun.file(claudeIgnorePath);
+    let existing = "";
+    if (await claudeIgnoreFile.exists()) {
+      existing = await claudeIgnoreFile.text();
+    }
+    const missing = ignoreEntries.filter((e) => !existing.includes(e));
+    if (missing.length > 0) {
+      const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
+      const block = `${separator}\n# claude-vault: prevent Claude from reading secrets\n${missing.join("\n")}\n`;
+      await Bun.write(claudeIgnorePath, existing + block);
+      console.log(`Added ${missing.length} entries to ${claudeIgnorePath}`);
+    } else {
+      console.log(".claudeignore already configured");
+    }
+
     console.log("Run: claude-vault start");
   },
 
