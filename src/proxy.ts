@@ -59,6 +59,18 @@ function buildForwardHeaders(incoming: Headers): Headers {
   return outgoing;
 }
 
+// Bun's fetch() auto-decompresses upstream responses, so the body we forward
+// is already plain bytes. We must strip content-encoding / content-length /
+// transfer-encoding from the upstream headers or the client will try to
+// gunzip plain text and crash with ZlibError.
+function cleanResponseHeaders(src: Headers): Headers {
+  const out = new Headers(src);
+  out.delete("content-encoding");
+  out.delete("content-length");
+  out.delete("transfer-encoding");
+  return out;
+}
+
 async function handleMessages(req: Request): Promise<Response> {
   const secrets = await loadSecrets();
   const bodyText = await req.text();
@@ -98,7 +110,7 @@ async function handleMessages(req: Request): Promise<Response> {
     const redactedResponse = redactString(responseText, secrets);
     return new Response(redactedResponse, {
       status: upstreamRes.status,
-      headers: upstreamRes.headers,
+      headers: cleanResponseHeaders(upstreamRes.headers),
     });
   }
 
@@ -122,9 +134,16 @@ async function handleMessages(req: Request): Promise<Response> {
         return;
       }
 
+      // No secrets to redact — pass raw chunks through immediately so the
+      // SSE stream is not stalled waiting for the buffer to fill.
+      if (maxSecretLen === 0) {
+        controller.enqueue(value);
+        return;
+      }
+
       sseBuffer += decoder.decode(value, { stream: true });
 
-      if (maxSecretLen > 0 && sseBuffer.length > maxSecretLen) {
+      if (sseBuffer.length > maxSecretLen) {
         const safeLen = sseBuffer.length - maxSecretLen;
         const safe = sseBuffer.slice(0, safeLen);
         sseBuffer = sseBuffer.slice(safeLen);
@@ -135,7 +154,40 @@ async function handleMessages(req: Request): Promise<Response> {
 
   return new Response(stream, {
     status: upstreamRes.status,
-    headers: new Headers(upstreamRes.headers),
+    headers: cleanResponseHeaders(upstreamRes.headers),
+  });
+}
+
+async function handleCountTokens(req: Request): Promise<Response> {
+  const secrets = await loadSecrets();
+  const bodyText = await req.text();
+  const redactedBody = redactString(bodyText, secrets);
+
+  if (bodyText.length !== redactedBody.length) {
+    console.log(`[vault-proxy] redacted secret(s) from count_tokens request`);
+  }
+
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await fetch(`${ANTHROPIC_API}/v1/messages/count_tokens`, {
+      method: "POST",
+      headers: buildForwardHeaders(req.headers),
+      body: redactedBody,
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    console.error(`[vault-proxy] count_tokens upstream error:`, err);
+    return new Response(JSON.stringify({ error: "Proxy failed to reach Anthropic API" }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const responseText = await upstreamRes.text();
+  const redactedResponse = redactString(responseText, secrets);
+  return new Response(redactedResponse, {
+    status: upstreamRes.status,
+    headers: cleanResponseHeaders(upstreamRes.headers),
   });
 }
 
@@ -147,26 +199,12 @@ async function handleRequest(req: Request): Promise<Response> {
     return handleMessages(req);
   }
 
-  if (!ALLOWED_PATHS.has(url.pathname)) {
-    return new Response("Not found", { status: 404 });
+  if (url.pathname === "/v1/messages/count_tokens" && req.method === "POST") {
+    console.log(`[vault-proxy] POST /v1/messages/count_tokens`);
+    return handleCountTokens(req);
   }
 
-  const target = `${ANTHROPIC_API}${url.pathname}${url.search}`;
-  try {
-    const res = await fetch(target, {
-      method: req.method,
-      headers: buildForwardHeaders(req.headers),
-      body: req.method !== "GET" ? await req.text() : undefined,
-      signal: AbortSignal.timeout(30_000),
-    });
-    return new Response(res.body, {
-      status: res.status,
-      headers: res.headers,
-    });
-  } catch (err) {
-    console.error(`[vault-proxy] passthrough error:`, err);
-    return new Response("Bad gateway", { status: 502 });
-  }
+  return new Response("Not found", { status: 404 });
 }
 
 console.log(`[claude-vault] proxy listening on http://127.0.0.1:${PORT}`);
