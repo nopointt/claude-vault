@@ -144,8 +144,9 @@ All three managed by `contexter-vault init`.
 
 | Epic | File | Status |
 |---|---|---|
-| **V-01 Rename + Ship v0.2.0** | [contexter-vault-v1.md](contexter-vault-v1.md) | 🔶 IN PROGRESS |
-| **PRE-LAUNCH** | [contexter-vault-prelaunch.md](contexter-vault-prelaunch.md) | 🔶 IN PROGRESS |
+| V-01..V-07 (shipped) | [contexter-vault-v1.md](contexter-vault-v1.md) | ✅ COMPLETE |
+| **V-08 Desktop Coverage** | [contexter-vault-v8.md](contexter-vault-v8.md) | ⬜ PLANNED |
+| **V-09 GTM Launch — 5K Stars** | [contexter-vault-v9.md](contexter-vault-v9.md) | 🎯 NEXT |
 
 ## Write Authority
 

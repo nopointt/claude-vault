@@ -1,11 +1,22 @@
 # STATE — contexter-vault
 
 ## Position
-- **Phase:** V-01..V-07 ✅ COMPLETE, v0.2.0 PUBLISHED on npm
-- **Status:** **contexter-vault@0.2.0 LIVE** on https://www.npmjs.com/package/contexter-vault. Installable via `bun install -g contexter-vault`. Axis skill routing + git remote URL migrated to `contexter-vault`. Remaining items are manual OS-level operations (dir rename, GitHub repo rename, proxy migration).
-- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #3 — npm publish live, Axis routing migrated, rename deferred items documented)
-- **Sessions total:** 3
-- **Next:** (1) nopoint revoke 2 compromised npm tokens. (2) nopoint rename local dir `development/context-vault/` → `contexter-vault/` (after closing Claude session). (3) nopoint rename GitHub repo via UI. (4) nopoint migrate running proxy to global npm install + rename `~/.claude-vault/` → `~/.contexter-vault/`. (5) nopoint generate fresh granular token → GitHub Secrets `NPM_TOKEN` → release.yml automation.
+- **Phase:** V-01..V-07 ✅ COMPLETE. **V-08 + V-09 PLANNED.**
+- **Current focus:** 🎯 **V-09 GTM Launch Execution — 5K Stars campaign (90 days).** V-08 Desktop Coverage runs in parallel to double addressable market before hard launch.
+- **Status:** `contexter-vault@0.2.0` LIVE on https://www.npmjs.com/package/contexter-vault. Product shipped, polished, tested, documented. Ready for launch. Manual OS-level items deferred to nopoint (dir rename, GitHub repo rename, proxy migration).
+- **Last session:** 2026-04-21 (Axis, session d3a9f612 CLOSE #3 — npm publish live)
+- **Current session:** 2026-04-21 (Axis, session 4 — V-08 + V-09 epics planned, GTM focus activated)
+- **Sessions total:** 4
+- **Next (Axis — planning work):**
+  1. Create L3 file `contexter-vault-v9.md` with detailed GTM execution spec (narrative, assets, channels, timeline)
+  2. Create L3 file `contexter-vault-v8.md` with Desktop MITM spec (smoke test → native TLS vs mitmproxy decision → CA install helper)
+  3. Produce V-09 launch assets: demo GIF, landing page copy, 3 blog drafts, HN post variants, Twitter thread, press kit, comparison table
+- **Next (nopoint — manual, non-blocking):**
+  - Revoke 2 compromised npm tokens (`npm_XjcX…`, `npm_Gwkz…`)
+  - Rename local dir `development/context-vault/` → `contexter-vault/`
+  - Rename GitHub repo via UI
+  - Migrate running proxy to global npm install + rename `~/.claude-vault/` → `~/.contexter-vault/`
+  - Generate fresh granular NPM_TOKEN → GitHub Secrets → release.yml automation
 
 ## Key Completions
 - **Session 3 (2026-04-21):** `contexter-vault@0.2.0` PUBLISHED on npm (granular token with Bypass 2FA). Axis skill routing (4 files) + `axis-active` + git remote URL migrated to `contexter-vault`. Rename of on-disk directory deferred (Windows cwd hold).
@@ -59,13 +70,10 @@
 - **Low C: drive disk** (~2.2 GB free per recovery §I): disk-check.sh blocks heavy ops. Not blocking V-01 but operational risk.
 - **Socket errors in current session** (~235K tokens): proxy falls on very large request bodies + context. Retry works most of the time. Full fix requires V-02 supervisor-worker split.
 
-## Deferred
-- V-02 Resilience: supervisor-worker architecture, detached proxy, UNPROXIED fallback, auto-respawn on external kill
-- V-03 Security hardening: formal threat model, secure buffer wipe (B-14), key ACL (B-15), body size limit (B-10), vault format versioning (B-13)
-- V-04 Observability: /health endpoint (partial in V-01), log rotation, --verbose flag, live proxy status check
-- V-05 GTM Launch: HN Show HN, r/ClaudeAI, r/selfhosted, demo GIF, landing page
-- V-06 Advanced features: .claude-plugin package, secret expiry, multi-profile vaults, .env import, encrypted backup export
-- CI/CD: GitHub Actions, cross-platform test matrix, coverage report
+## Deferred / Upcoming
+- ✅ V-02..V-07 all COMPLETE in v0.2.0
+- 🔶 **V-08 Desktop Coverage** (PLANNED): HTTPS MITM system proxy + self-signed CA so vault works with Claude Desktop app (not just CLI). AIA verified LOW ban risk + no cert pinning. Blocks nothing, recommended before V-09 hard launch for wider addressable market.
+- 🎯 **V-09 GTM Launch Execution** (NEXT): 5K stars in 90 days via HN Show HN + Reddit + Twitter + Product Hunt + blogs + awesome-lists + influencer outreach. Assets: demo GIF, landing, 3 blog posts, HN variants, comparison table.
 
 ## Metrics
 - Version: 0.2.0 (PUBLISHED 2026-04-21 13:22 UTC)
