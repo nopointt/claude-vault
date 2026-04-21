@@ -1,9 +1,8 @@
 import { randomBytes, createCipheriv, createDecipheriv } from "crypto";
 import { join } from "path";
-import { homedir } from "os";
 import { chmodSync, statSync } from "fs";
+import { VAULT_DIR } from "./constants";
 
-const VAULT_DIR = join(homedir(), ".context-vault");
 const KEY_FILE = join(VAULT_DIR, "vault.key");
 
 const ALGORITHM = "aes-256-gcm";

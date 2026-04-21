@@ -1,14 +1,15 @@
 import { join } from "path";
-import { homedir } from "os";
 import { encrypt, decrypt, loadKey, generateKey } from "./crypto";
-
-const VAULT_DIR = join(homedir(), ".context-vault");
+import { VAULT_DIR } from "./constants";
 const VAULT_FILE = join(VAULT_DIR, "vault.enc");
 const BUFFER_FILE = join(VAULT_DIR, "buffer.txt");
 
 export { VAULT_DIR, BUFFER_FILE };
 
+const VAULT_FORMAT_VERSION = 1;
+
 type VaultData = Record<string, string>;
+type VaultEnvelope = { _version: number; secrets: VaultData };
 
 async function ensureDir(): Promise<void> {
   await Bun.write(join(VAULT_DIR, ".keep"), "");
@@ -22,7 +23,12 @@ async function load(): Promise<VaultData> {
   const key = await loadKey();
   try {
     const json = decrypt(packed, key);
-    return JSON.parse(json) as VaultData;
+    const parsed = JSON.parse(json);
+    if (parsed && typeof parsed === "object" && "_version" in parsed) {
+      const envelope = parsed as VaultEnvelope;
+      return envelope.secrets;
+    }
+    return parsed as VaultData;
   } catch (err) {
     console.error("[context-vault] failed to decrypt vault — wrong key or corrupted file:", err);
     throw new Error("Vault decryption failed. Check vault.key or reinitialize with: context-vault init");
@@ -32,8 +38,12 @@ async function load(): Promise<VaultData> {
 async function save(data: VaultData): Promise<void> {
   await ensureDir();
   const key = await loadKey();
-  const packed = encrypt(JSON.stringify(data), key);
-  await Bun.write(VAULT_FILE, packed);
+  const envelope: VaultEnvelope = { _version: VAULT_FORMAT_VERSION, secrets: data };
+  const packed = encrypt(JSON.stringify(envelope), key);
+  const tmpFile = VAULT_FILE + ".tmp";
+  await Bun.write(tmpFile, packed);
+  const { renameSync } = await import("fs");
+  renameSync(tmpFile, VAULT_FILE);
 }
 
 export async function vaultSet(name: string, value: string): Promise<void> {
@@ -83,9 +93,18 @@ export async function readBuffer(): Promise<string | null> {
 
 export async function wipeBuffer(): Promise<void> {
   try {
+    const file = Bun.file(BUFFER_FILE);
+    if (!(await file.exists())) return;
+    const size = file.size;
+    if (size > 0) {
+      const { randomBytes } = await import("crypto");
+      await Bun.write(BUFFER_FILE, randomBytes(size));
+    }
     await Bun.write(BUFFER_FILE, "");
-  } catch {
-    // ignore
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("ENOENT")) return;
+    console.error(`[context-vault] wipeBuffer failed: ${msg}`);
   }
 }
 

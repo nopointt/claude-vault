@@ -7,8 +7,12 @@ process.on("unhandledRejection", (err) => {
   console.error(`[context-vault] unhandled rejection (kept alive):`, err);
 });
 
-const ANTHROPIC_API = "https://api.anthropic.com";
+const ANTHROPIC_API = process.env.ANTHROPIC_UPSTREAM ?? "https://api.anthropic.com";
 const PORT = parseInt(process.env.CONTEXT_VAULT_PORT ?? "9277");
+const MAX_BODY_BYTES = 100 * 1024 * 1024; // 100 MB
+const UPSTREAM_TIMEOUT_MS = 300_000; // 5 min for streaming
+const COUNT_TOKENS_TIMEOUT_MS = 30_000; // 30s for count_tokens
+const CACHE_TTL_MS = 5_000; // secret cache TTL
 
 const PASSTHROUGH_HEADERS = [
   "anthropic-version",
@@ -17,13 +21,13 @@ const PASSTHROUGH_HEADERS = [
   "content-type",
   "x-api-key",
   "x-claude-code-session-id",
+  "user-agent",
 ];
 
 type VaultEntry = { name: string; value: string; placeholder: string };
 
 let cachedSecrets: VaultEntry[] = [];
 let cacheTime = 0;
-const CACHE_TTL_MS = 5000;
 
 async function loadSecrets(): Promise<VaultEntry[]> {
   const now = Date.now();
@@ -73,12 +77,29 @@ function cleanResponseHeaders(src: Headers): Headers {
   return out;
 }
 
+process.on("SIGHUP", () => {
+  cacheTime = 0;
+  console.log("[context-vault] SIGHUP received, secret cache invalidated");
+});
+
+async function readBodyWithLimit(req: Request): Promise<string> {
+  const contentLength = parseInt(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    throw new Error(`Request body too large: ${contentLength} bytes (max ${MAX_BODY_BYTES})`);
+  }
+  const text = await req.text();
+  if (text.length > MAX_BODY_BYTES) {
+    throw new Error(`Request body too large: ${text.length} bytes (max ${MAX_BODY_BYTES})`);
+  }
+  return text;
+}
+
 async function handleMessages(req: Request): Promise<Response> {
   let secrets: VaultEntry[];
   let bodyText: string;
   try {
     secrets = await loadSecrets();
-    bodyText = await req.text();
+    bodyText = await readBodyWithLimit(req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[context-vault] request setup failed: ${msg}`);
@@ -108,7 +129,7 @@ async function handleMessages(req: Request): Promise<Response> {
       method: "POST",
       headers: buildForwardHeaders(req.headers),
       body: redactedBody,
-      signal: AbortSignal.timeout(300_000),
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch (err) {
     console.error(`[context-vault] upstream error:`, err);
@@ -211,7 +232,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
   let bodyText: string;
   try {
     secrets = await loadSecrets();
-    bodyText = await req.text();
+    bodyText = await readBodyWithLimit(req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[context-vault] count_tokens setup failed: ${msg}`);
@@ -232,7 +253,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
       method: "POST",
       headers: buildForwardHeaders(req.headers),
       body: redactedBody,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(COUNT_TOKENS_TIMEOUT_MS),
     });
   } catch (err) {
     console.error(`[context-vault] count_tokens upstream error:`, err);
@@ -261,6 +282,15 @@ async function handleRequest(req: Request): Promise<Response> {
   if (url.pathname === "/v1/messages/count_tokens" && req.method === "POST") {
     console.log(`[context-vault] POST /v1/messages/count_tokens`);
     return handleCountTokens(req);
+  }
+
+  if (url.pathname === "/health" && req.method === "GET") {
+    return new Response(JSON.stringify({
+      status: "ok",
+      version: "0.2.0",
+      uptime: Math.floor(process.uptime()),
+      secrets: cachedSecrets.length,
+    }), { headers: { "content-type": "application/json" } });
   }
 
   return new Response("Not found", { status: 404 });
