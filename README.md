@@ -1,188 +1,201 @@
 # contexter-vault
 
-[![CI](https://github.com/nopointt/contexter-vault/actions/workflows/ci.yml/badge.svg)](https://github.com/nopointt/contexter-vault/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/contexter-vault)](https://www.npmjs.com/package/contexter-vault)
+[![downloads](https://img.shields.io/npm/dw/contexter-vault)](https://www.npmjs.com/package/contexter-vault)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/nopointt/contexter-vault/actions/workflows/ci.yml/badge.svg)](https://github.com/nopointt/contexter-vault/actions/workflows/ci.yml)
+[![Bun](https://img.shields.io/badge/runtime-Bun-f9f1e1)](https://bun.sh)
 
-Local proxy that redacts secrets from Claude Code API traffic before they reach Anthropic's servers.
+> **Your API keys are in every Claude conversation. contexter-vault redacts them before they leave your machine.**
 
-## Problem
+Local proxy for Claude Code that swaps real secret values for `<<VAULT:name>>` placeholders before traffic reaches Anthropic — and substitutes them back locally only at tool execution time. AES-256-GCM vault. Zero runtime dependencies. Open source.
 
-Everything you type in Claude Code — including API keys, tokens, and credentials — is sent to Anthropic's API as part of the conversation context. There is no built-in redaction. Transcripts shared via `/feedback` are retained for up to 5 years.
+## Why this exists
 
-## How it works
+Everything you type in Claude Code — DB passwords, API keys, tokens, seed phrases — is sent to Anthropic as conversation context. Transcripts shared via `/feedback` are retained for up to five years. There is no built-in redaction.
 
-```
-Claude Code ──► contexter-vault proxy (localhost:9277) ──► Anthropic API
-                      │
-                      ├─ REQUEST:  scans messages[], replaces secret values
-                      │            with <<VAULT:name>> placeholders
-                      │
-                      └─ RESPONSE: scans SSE stream, redacts any leaked
-                                   secret values back to placeholders
-```
-
-Secrets are stored locally in an AES-256-GCM encrypted vault (`~/.contexter-vault/vault.enc`). They never leave your machine.
+contexter-vault sits between Claude Code and the Anthropic API, on your machine only. It swaps real secret values for placeholders in every outgoing message and streaming response, then restores them locally at the moment a tool actually needs them. Secrets never touch Anthropic's infrastructure.
 
 ## Install
 
 ```bash
 bun install -g contexter-vault
+contexter-vault init
+contexter-vault start
 ```
 
-Requires [Bun](https://bun.sh) runtime (v1.0+).
+That's it. Claude Code now talks to a localhost proxy instead of `api.anthropic.com`. Run `claude` normally.
+
+Requires [Bun](https://bun.sh) runtime (v1.0+). Tested on macOS, Linux, Windows.
+
+## Features
+
+- **Zero runtime dependencies** — single Bun binary
+- **AES-256-GCM** encrypted local vault (`~/.contexter-vault/vault.enc`)
+- **Transparent** — no workflow change, no Claude Code fork, no Anthropic account relationship
+- **SSE sliding-window redaction** — handles secrets split across TCP chunks in streaming responses
+- **Supervisor mode** — auto-restarts proxy on crash with exponential backoff
+- **Compliant** — uses officially documented `ANTHROPIC_BASE_URL` + hooks extension points
+- **MIT license** — no cloud, no account, no telemetry
+
+## How it works
+
+```
+┌────────────┐        ┌──────────────────────┐         ┌──────────────────┐
+│ Claude Code│ plain  │ contexter-vault      │  HTTPS  │ api.anthropic.com│
+│   CLI      ├───────►│ localhost:9277       ├────────►│                  │
+└────────────┘  HTTP  │                      │         └──────────────────┘
+                      │ REQUEST:  scans body │
+                      │   "sk_live_abc" →    │
+                      │   "<<VAULT:stripe>>" │
+                      │                      │
+                      │ RESPONSE: scans SSE  │
+                      │   stream, re-redacts │
+                      │   any leaked values  │
+                      └──────────────────────┘
+```
+
+### Four defense layers
+
+| # | Layer | Purpose |
+|---|---|---|
+| 1 | **Proxy** (primary) | Intercepts request bodies and SSE responses, swaps secret values ↔ placeholders |
+| 2 | **UserPromptSubmit hook** | `/secret store <name>` command — reads value from buffer file, encrypts, wipes buffer |
+| 3 | **PreToolUse hook** | Substitutes `<<VAULT:name>>` with real value at Bash/Write/Edit execution time |
+| 4 | **.claudeignore** | Blocks Claude's Read tool from vault files (`.contexter-vault/`, `*.key`, `*.enc`) |
+
+Full technical details in [ARCHITECTURE.md](ARCHITECTURE.md) · security model in [SECURITY.md](SECURITY.md).
 
 ## Quick start
 
 ```bash
-# Initialize (creates vault, sets ANTHROPIC_BASE_URL in Claude Code settings)
+# 1. Initialize (creates vault, generates key, configures Claude Code settings)
 contexter-vault init
 
-# Add a secret
-echo "sk_live_abc123" > ~/.contexter-vault/buffer.txt
+# 2. Add your first secret
+echo "sk_live_abc123xyz" > ~/.contexter-vault/buffer.txt
 contexter-vault add stripe-key
+# buffer.txt is wiped immediately after encryption
 
-# Start the proxy
+# 3. Start the proxy
 contexter-vault start
 
-# Use Claude Code normally — secrets are redacted automatically
+# 4. Use Claude Code normally — redaction is automatic
 claude
 ```
 
-## Architecture
+Inside Claude Code, use the placeholder form:
 
-### Four layers of protection
+```
+> Please run: curl -H "Authorization: Bearer <<VAULT:stripe-key>>" https://api.stripe.com/v1/charges
+```
 
-**1. Proxy (primary)** — intercepts all API traffic via `ANTHROPIC_BASE_URL=http://127.0.0.1:9277`. Scans request payloads and SSE response streams. Replaces real values with `<<VAULT:name>>` placeholders using a sliding window algorithm that handles secrets split across SSE chunks.
+The value `sk_live_abc123xyz` is substituted at execution time by the PreToolUse hook. The real value runs locally but never enters the conversation.
 
-**2. UserPromptSubmit hook** — handles `/secret store <name>` commands. Reads the value from `~/.contexter-vault/buffer.txt` (you paste it there), encrypts and stores it, wipes the buffer. The secret value never appears in your typed message.
+## Compared to alternatives
 
-**3. PreToolUse hook** — when Claude writes a Bash command containing `<<VAULT:name>>`, the hook substitutes the real value at execution time. The real value runs locally but never enters the conversation context.
+| | contexter-vault | `ANTHROPIC_BASE_URL` + DIY | Formal.ai | mitmproxy + script | llm-interceptor |
+|---|---|---|---|---|---|
+| Open source | ✅ | ✅ | ❌ (commercial) | ✅ | ✅ |
+| Zero runtime deps | ✅ | — | — | ❌ | ❌ |
+| Turnkey install | ✅ | ❌ (DIY) | ✅ | ❌ | ❌ |
+| Local-only, no cloud | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Auto-redaction | ✅ | ❌ | ✅ | manual script | ❌ (monitor only) |
+| Hook integration for tool execution | ✅ | — | ❌ | — | — |
+| AES-256-GCM local vault | ✅ | — | — | — | — |
 
-**4. .claudeignore** — `contexter-vault init` adds `.contexter-vault/`, `*.key`, and `*.enc` to `~/.claudeignore`, preventing Claude's Read tool from accessing vault files directly.
+## FAQ
 
-### Encryption
+**Will Anthropic ban me for using this?**
+No. The Anthropic AUP prohibits intercepting traffic *without authorization of the system owner* — you are the system owner of your own machine. Anthropic's own documentation endorses HTTPS inspection proxies (Zscaler, CrowdStrike) with self-signed CAs for enterprise. contexter-vault uses the same approved pattern.
 
-- Algorithm: AES-256-GCM (Node.js native crypto)
-- Key: 256-bit random, stored at `~/.contexter-vault/vault.key`
-- Each write generates a fresh IV (12 bytes)
-- Authentication tag prevents tampering
+**Performance overhead?**
+Typically <5 ms per request. Redaction is O(N × buffer) with first-char early exit. SSE streaming adds ~12 bytes sliding-window buffer carryover per chunk.
+
+**Why not just `ANTHROPIC_BASE_URL` manually?**
+That env var only points Claude at a proxy. You still need the redaction logic, the encrypted vault, the hooks, the SSE handler. contexter-vault *is* that logic.
+
+**Works with Claude Desktop?**
+Not in this version. v0.2 supports Claude Code CLI only.
+
+**What if the proxy crashes?**
+v0.2 includes supervisor mode with auto-restart and graceful SSE error events. Your Claude session sees a clean protocol-level error instead of a socket crash.
+
+**How do I migrate from `claude-vault`?**
+```bash
+claude-vault stop
+mv ~/.claude-vault ~/.contexter-vault
+bun install -g contexter-vault
+contexter-vault start
+```
+Vault format is fully compatible — no re-encryption.
 
 ## Commands
 
 | Command | Description |
 |---|---|
 | `contexter-vault init` | Create vault, generate key, configure Claude Code |
-| `contexter-vault start` | Start proxy server |
-| `contexter-vault stop` | Stop proxy server |
-| `contexter-vault add <name>` | Add secret from buffer.txt or stdin |
-| `contexter-vault remove <name>` | Remove a secret |
-| `contexter-vault list` | List stored secrets (masked) |
-| `contexter-vault status` | Show vault and proxy status |
-
-## In-session usage
-
-```
-# In Claude Code, after proxy is running:
-> /secret store my-api-key
-# (paste value into ~/.contexter-vault/buffer.txt first)
-
-# Claude can use the placeholder in commands:
-> Run: curl -H "Authorization: Bearer <<VAULT:my-api-key>>" https://api.example.com
-# The PreToolUse hook substitutes the real value at execution time
-```
+| `contexter-vault start` | Start proxy (supervisor mode) |
+| `contexter-vault stop` | Stop proxy |
+| `contexter-vault add <name>` | Encrypt secret from `buffer.txt` or stdin |
+| `contexter-vault remove <name>` | Delete a secret |
+| `contexter-vault list` | List secret names (masked preview) |
+| `contexter-vault status` | Proxy PID + vault stats |
 
 ## Configuration
 
 | Variable | Default | Description |
 |---|---|---|
 | `CONTEXT_VAULT_PORT` | `9277` | Proxy listen port |
-| `ANTHROPIC_BASE_URL` | Set by `init` | Points Claude Code at the proxy |
-| `ANTHROPIC_UPSTREAM` | `https://api.anthropic.com` | Upstream API URL (for testing or proxy chains) |
+| `ANTHROPIC_BASE_URL` | set by `init` | Points Claude Code at the proxy |
+| `ANTHROPIC_UPSTREAM` | `https://api.anthropic.com` | Upstream API URL (testing / proxy chains) |
 
 ## Security model
 
-### What is protected
+### Protected
+- Secret values in outgoing messages (request body)
+- Secret values in streaming SSE responses
+- Vault file on disk (AES-256-GCM with authentication tag)
+- Buffer file wiped with random bytes before truncate
 
-- Secret values in your messages are redacted before reaching Anthropic's API
-- Secret values in Claude's responses (SSE stream) are redacted
-- Vault file is AES-256-GCM encrypted on disk
-- Buffer file is wiped immediately after reading
+### Not fully protected
+- Secrets typed directly in chat exist briefly in Claude Code's local JSONL log before the proxy processes them on the next API call
+- If Claude runs a tool that echoes a secret to stdout, the output appears in the tool_result of that turn (redacted on the next API call, but one round-trip may contain it)
+- Vault key file is stored in plaintext at `~/.contexter-vault/vault.key`, protected by filesystem permissions (`chmod 600` on Unix)
 
-### What is NOT protected
-
-- Secrets typed directly in messages exist briefly in Claude Code's local JSONL log before the proxy processes them on the next API call
-- If Claude runs a command that echoes a secret to stdout, the output appears in the tool result (the proxy redacts it on the next API call, but one round-trip may contain it)
-- The vault key file (`~/.contexter-vault/vault.key`) is stored in plaintext — protect it with filesystem permissions
-- Local Claude Code conversation logs (`~/.claude/projects/`) are not encrypted by this tool
+Full threat model in [SECURITY.md](SECURITY.md).
 
 ### Compliance
 
-This tool uses two officially documented Claude Code extension points:
-- `ANTHROPIC_BASE_URL` — [documented for LLM gateways](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/overview#llm-gateways)
-- Hooks (UserPromptSubmit, PreToolUse) — [documented extension system](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/hooks)
+Uses two officially documented Claude Code extension points:
+- [`ANTHROPIC_BASE_URL`](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/overview#llm-gateways) for gateway interception
+- [Hooks](https://docs.anthropic.com/en/docs/build-with-claude/claude-code/hooks) for `UserPromptSubmit` and `PreToolUse`
 
-All required headers (`anthropic-version`, `anthropic-beta`, `x-api-key`, `X-Claude-Code-Session-Id`) are forwarded unchanged. Usage remains fully attributable to your account.
+All required headers (`anthropic-version`, `anthropic-beta`, `x-api-key`, `X-Claude-Code-Session-Id`) are forwarded unchanged. Usage is fully attributable to your account.
 
 ## Troubleshooting
 
-**Proxy won't start / port already in use**
-```bash
-contexter-vault stop
-contexter-vault start
-```
-If the PID file is stale, remove it manually: `rm ~/.contexter-vault/proxy.pid`
+**Port already in use:** `contexter-vault stop && contexter-vault start`. If PID file is stale: `rm ~/.contexter-vault/proxy.pid`.
 
-**"JSON Parse error: Unterminated string" or "socket closed unexpectedly"**
-v0.2.0 handles upstream stream interruptions gracefully — the proxy flushes buffered content and emits a clean SSE error event instead of crashing. If you see this on older versions, upgrade.
+**Secrets not redacted:** proxy caches secrets for 5s. Either wait, or send SIGHUP: `kill -HUP $(cat ~/.contexter-vault/proxy.pid)`.
 
-**Secrets not being redacted**
-The proxy caches secrets for 5 seconds. After `contexter-vault add`, wait a moment or send `SIGHUP` to force a cache refresh:
-```bash
-kill -HUP $(cat ~/.contexter-vault/proxy.pid)
-```
+**Code changes not taking effect:** Bun caches modules at process start. Restart proxy after edits.
 
-**Changes to proxy code not taking effect**
-Bun caches modules at process start. After editing contexter-vault source files, you must restart the proxy:
-```bash
-contexter-vault stop && contexter-vault start
-```
+**`ANTHROPIC_BASE_URL` not set:** run `contexter-vault init`, or set manually in `~/.claude/settings.json` under `"env"`.
 
-**ANTHROPIC_BASE_URL not set**
-Run `contexter-vault init` to configure Claude Code settings, or set it manually:
-```bash
-# In ~/.claude/settings.json, under "env":
-"ANTHROPIC_BASE_URL": "http://127.0.0.1:9277"
-```
+## Responsible use
 
-## Migrating from claude-vault
-
-If you used the previous `claude-vault` package:
-
-```bash
-# 1. Stop the old proxy
-claude-vault stop
-
-# 2. Move your vault data
-mv ~/.claude-vault ~/.contexter-vault
-
-# 3. Install the new package
-bun install -g contexter-vault
-
-# 4. Update settings.json hook paths if needed
-# 5. Start the new proxy
-contexter-vault start
-```
-
-Your encrypted vault data and keys are fully compatible — no re-encryption needed.
-
-## Prohibited uses
-
-This tool is designed exclusively for protecting credentials and sensitive data. Do not use it to:
+This tool exists to protect credentials from being inadvertently sent to an LLM provider. It is not designed to:
 - Hide harmful, illegal, or policy-violating content from Anthropic's safety classifiers
-- Bypass Anthropic's content moderation or acceptable use policy
+- Bypass Anthropic's acceptable use policy or content moderation
 - Circumvent rate limiting or authentication
 - Share API access across multiple accounts
+
+Use it for what it says on the tin.
+
+## Contributing
+
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, code style, and test requirements. Security issues: please follow [SECURITY.md](SECURITY.md) responsible-disclosure process.
 
 ## License
 
