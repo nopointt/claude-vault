@@ -1,10 +1,10 @@
 import { vaultAll } from "./vault";
 
 process.on("uncaughtException", (err) => {
-  console.error(`[context-vault] uncaught exception (kept alive):`, err);
+  console.error(`[contexter-vault] uncaught exception (kept alive):`, err);
 });
 process.on("unhandledRejection", (err) => {
-  console.error(`[context-vault] unhandled rejection (kept alive):`, err);
+  console.error(`[contexter-vault] unhandled rejection (kept alive):`, err);
 });
 
 const ANTHROPIC_API = process.env.ANTHROPIC_UPSTREAM ?? "https://api.anthropic.com";
@@ -97,7 +97,7 @@ function cleanResponseHeaders(src: Headers): Headers {
 
 process.on("SIGHUP", () => {
   cacheTime = 0;
-  console.log("[context-vault] SIGHUP received, secret cache invalidated");
+  console.log("[contexter-vault] SIGHUP received, secret cache invalidated");
 });
 
 async function readBodyWithLimit(req: Request): Promise<string> {
@@ -120,7 +120,7 @@ async function handleMessages(req: Request): Promise<Response> {
     bodyText = await readBodyWithLimit(req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[context-vault] request setup failed: ${msg}`);
+    console.error(`[contexter-vault] request setup failed: ${msg}`);
     return new Response(JSON.stringify({ error: "Proxy failed to read request", detail: msg }), {
       status: 502,
       headers: { "content-type": "application/json" },
@@ -138,7 +138,7 @@ async function handleMessages(req: Request): Promise<Response> {
 
   if (bodyText.length !== redactedBody.length) {
     metrics.redactionsPerformed++;
-    console.log(`[context-vault] redacted ${secrets.length} secret pattern(s) from request`);
+    console.log(`[contexter-vault] redacted ${secrets.length} secret pattern(s) from request`);
   }
 
   let upstreamRes: Response;
@@ -151,7 +151,7 @@ async function handleMessages(req: Request): Promise<Response> {
     });
   } catch (err) {
     metrics.upstreamErrors++;
-    console.error(`[context-vault] upstream error:`, err);
+    console.error(`[contexter-vault] upstream error:`, err);
     return new Response(JSON.stringify({ error: "Proxy failed to reach Anthropic API" }), {
       status: 502,
       headers: { "content-type": "application/json" },
@@ -224,7 +224,7 @@ async function handleMessages(req: Request): Promise<Response> {
         // error event so the client sees a clean protocol-level failure,
         // then close the controller without throwing.
         const msg = err instanceof Error ? err.message : String(err);
-        console.error(`[context-vault] upstream stream error — graceful close: ${msg}`);
+        console.error(`[contexter-vault] upstream stream error — graceful close: ${msg}`);
         try {
           if (sseBuffer.length > 0) {
             controller.enqueue(encoder.encode(redactString(sseBuffer, secrets)));
@@ -254,7 +254,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
     bodyText = await readBodyWithLimit(req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[context-vault] count_tokens setup failed: ${msg}`);
+    console.error(`[contexter-vault] count_tokens setup failed: ${msg}`);
     return new Response(JSON.stringify({ error: "Proxy failed to read request", detail: msg }), {
       status: 502,
       headers: { "content-type": "application/json" },
@@ -264,7 +264,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
 
   if (bodyText.length !== redactedBody.length) {
     metrics.redactionsPerformed++;
-    console.log(`[context-vault] redacted secret(s) from count_tokens request`);
+    console.log(`[contexter-vault] redacted secret(s) from count_tokens request`);
   }
 
   let upstreamRes: Response;
@@ -277,7 +277,7 @@ async function handleCountTokens(req: Request): Promise<Response> {
     });
   } catch (err) {
     metrics.upstreamErrors++;
-    console.error(`[context-vault] count_tokens upstream error:`, err);
+    console.error(`[contexter-vault] count_tokens upstream error:`, err);
     return new Response(JSON.stringify({ error: "Proxy failed to reach Anthropic API" }), {
       status: 502,
       headers: { "content-type": "application/json" },
@@ -299,13 +299,13 @@ async function handleRequest(req: Request): Promise<Response> {
 
   if (url.pathname === "/v1/messages" && req.method === "POST") {
     metrics.requestsMessages++;
-    console.log(`[context-vault] POST /v1/messages`);
+    console.log(`[contexter-vault] POST /v1/messages`);
     return handleMessages(req);
   }
 
   if (url.pathname === "/v1/messages/count_tokens" && req.method === "POST") {
     metrics.requestsCountTokens++;
-    console.log(`[context-vault] POST /v1/messages/count_tokens`);
+    console.log(`[contexter-vault] POST /v1/messages/count_tokens`);
     return handleCountTokens(req);
   }
 
@@ -331,11 +331,11 @@ async function handleRequest(req: Request): Promise<Response> {
   return new Response("Not found", { status: 404 });
 }
 
-console.log(`[context-vault] proxy listening on http://127.0.0.1:${PORT}`);
-console.log(`[context-vault] forwarding to ${ANTHROPIC_API}`);
+console.log(`[contexter-vault] proxy listening on http://127.0.0.1:${PORT}`);
+console.log(`[contexter-vault] forwarding to ${ANTHROPIC_API}`);
 
 const secrets = await loadSecrets();
-console.log(`[context-vault] loaded ${secrets.length} secret(s): ${secrets.map((s) => s.name).join(", ")}`);
+console.log(`[contexter-vault] loaded ${secrets.length} secret(s): ${secrets.map((s) => s.name).join(", ")}`);
 
 const server = Bun.serve({
   port: PORT,
@@ -343,7 +343,7 @@ const server = Bun.serve({
   idleTimeout: 255,
   fetch: handleRequest,
   error(err) {
-    console.error(`[context-vault] server error:`, err);
+    console.error(`[contexter-vault] server error:`, err);
     return new Response(JSON.stringify({ error: "Proxy internal error" }), {
       status: 500,
       headers: { "content-type": "application/json" },
@@ -352,12 +352,12 @@ const server = Bun.serve({
 });
 
 process.on("SIGTERM", () => {
-  console.log("[context-vault] SIGTERM received, shutting down");
+  console.log("[contexter-vault] SIGTERM received, shutting down");
   server.stop();
   process.exit(0);
 });
 process.on("SIGINT", () => {
-  console.log("[context-vault] SIGINT received, shutting down");
+  console.log("[contexter-vault] SIGINT received, shutting down");
   server.stop();
   process.exit(0);
 });

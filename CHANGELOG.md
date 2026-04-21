@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2026-04-21
 
 ### Added
-- Renamed from `claude-vault` to `context-vault`
+- Renamed from `claude-vault` to `contexter-vault`
 - Supervisor mode with auto-restart on crash (exponential backoff, max 50 restarts)
 - SSE stream error handling (graceful close + synthetic error event)
 - `idleTimeout: 255` for long-running Anthropic requests
@@ -22,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Env var: `CLAUDE_VAULT_PORT` -> `CONTEXT_VAULT_PORT`
-- Vault dir: `~/.claude-vault/` -> `~/.context-vault/`
-- Log prefix unified to `[context-vault]`
+- Vault dir: `~/.claude-vault/` -> `~/.contexter-vault/`
+- Log prefix unified to `[contexter-vault]`
 
 ### Removed
 - Dead code: unused `ALLOWED_PATHS` constant

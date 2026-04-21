@@ -2,10 +2,10 @@
 
 ## Overview
 
-context-vault is a local HTTP proxy that sits between Claude Code and the Anthropic API. It intercepts all API traffic on `127.0.0.1:9277`, redacts secret values from requests and responses, and forwards to `api.anthropic.com`.
+contexter-vault is a local HTTP proxy that sits between Claude Code and the Anthropic API. It intercepts all API traffic on `127.0.0.1:9277`, redacts secret values from requests and responses, and forwards to `api.anthropic.com`.
 
 ```
-Claude Code  ──HTTP──>  context-vault proxy  ──HTTPS──>  Anthropic API
+Claude Code  ──HTTP──>  contexter-vault proxy  ──HTTPS──>  Anthropic API
               :9277      (redact secrets)
 ```
 
@@ -23,7 +23,7 @@ Secrets are cached in memory with a 5-second TTL. `SIGHUP` invalidates the cache
 
 ### Vault (`src/vault.ts`)
 
-Encrypted key-value store at `~/.context-vault/vault.enc`. Uses AES-256-GCM with a 32-byte key stored in `vault.key`.
+Encrypted key-value store at `~/.contexter-vault/vault.enc`. Uses AES-256-GCM with a 32-byte key stored in `vault.key`.
 
 Format: JSON envelope `{ _version: 1, secrets: { name: value } }` encrypted as a single blob. Backward-compatible with v0 bare-object format.
 
@@ -35,7 +35,7 @@ AES-256-GCM with random 12-byte IV per encryption. Packed format: `[IV (12B)] [A
 
 Key file permissions: `chmod 600` on Unix, warning on Windows.
 
-### CLI (`bin/context-vault.ts`)
+### CLI (`bin/contexter-vault.ts`)
 
 Commands: `init`, `start`, `stop`, `add`, `remove`, `list`, `status`.
 

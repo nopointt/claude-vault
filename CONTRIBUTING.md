@@ -1,4 +1,4 @@
-# Contributing to context-vault
+# Contributing to contexter-vault
 
 ## Prerequisites
 
@@ -8,8 +8,8 @@
 ## Setup
 
 ```bash
-git clone https://github.com/nopointt/context-vault.git
-cd context-vault
+git clone https://github.com/nopointt/contexter-vault.git
+cd contexter-vault
 bun install
 ```
 
@@ -24,7 +24,7 @@ bun run src/test-local.ts
 bun run src/test-redaction.ts
 
 # Run CLI
-bun run bin/context-vault.ts status
+bun run bin/contexter-vault.ts status
 ```
 
 ## Testing with a custom upstream

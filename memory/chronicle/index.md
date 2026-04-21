@@ -1,5 +1,5 @@
-# Chronicle Index — context-vault
+# Chronicle Index — contexter-vault
 
 | Date | Project | Type | N | Epic | File |
 |---|---|---|---|---|---|
-| 2026-04-21 | context-vault | CLOSE | 1 | context-vault-v1 | context-vault-current.md |
+| 2026-04-21 | contexter-vault | CLOSE | 1 | contexter-vault-v1 | contexter-vault-current.md |

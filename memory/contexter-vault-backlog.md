@@ -1,5 +1,5 @@
 ---
-# context-vault-backlog.md — Bug Audit + Tech Debt
+# contexter-vault-backlog.md — Bug Audit + Tech Debt
 > Layer: L2.5 | Frequency: medium | Loaded: when triaging V-0X epics
 > Last updated: 2026-04-21 (ALL EPICS COMPLETE, 42/42 resolved)
 ---
@@ -63,7 +63,7 @@ Legend: severity = **CRIT** (data loss / crash) · **HIGH** (functional bug) · 
 - **TD-13** ~~No metrics endpoint~~ → RESOLVED V-06. `/metrics` endpoint with counters, memory, cache age.
 - **TD-16** ~~engines only bun~~ → N/A (bun-only by design).
 - **TD-17** ~~No release automation~~ → RESOLVED V-07. GitHub Actions release.yml publishes on tag push.
-- **TD-18** ~~No detached mode Windows~~ → RESOLVED V-06. `context-vault start --detach` spawns background supervisor.
+- **TD-18** ~~No detached mode Windows~~ → RESOLVED V-06. `contexter-vault start --detach` spawns background supervisor.
 
 ---
 
@@ -73,7 +73,7 @@ Legend: severity = **CRIT** (data loss / crash) · **HIGH** (functional bug) · 
 |---|---|---|
 | FIX-01 | `idleTimeout: 255` in Bun.serve — prevents socket close during long Anthropic thinking | proxy.ts |
 | FIX-02 | `process.on('uncaughtException/unhandledRejection')` — prevents process death from code errors | proxy.ts |
-| FIX-03 | Supervisor mode in `start` command — auto-restarts proxy child on crash (50 max, exponential backoff) | bin/context-vault.ts |
+| FIX-03 | Supervisor mode in `start` command — auto-restarts proxy child on crash (50 max, exponential backoff) | bin/contexter-vault.ts |
 
 ---
 

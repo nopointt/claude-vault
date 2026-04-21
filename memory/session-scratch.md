@@ -17,7 +17,7 @@
 **Files changed (all synced to both development/ and tools/ copies):**
 - `src/proxy.ts` — PL-01, PL-04, PL-05
 - `src/crypto.ts` — PL-03
-- `bin/context-vault.ts` — PL-02
+- `bin/contexter-vault.ts` — PL-02
 - `CHANGELOG.md` — PL-06 (new file)
 
 **Backlog updated:** B-07, B-15, B-18, B-19, TD-03, TD-11 marked RESOLVED (10 total now)

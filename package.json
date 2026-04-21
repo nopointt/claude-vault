@@ -1,11 +1,11 @@
 {
-  "name": "context-vault",
+  "name": "contexter-vault",
   "version": "0.2.0",
   "description": "Local proxy that redacts secrets from Claude Code API traffic before they reach Anthropic's servers",
   "type": "module",
   "main": "src/proxy.ts",
   "bin": {
-    "context-vault": "bin/context-vault.ts"
+    "contexter-vault": "bin/contexter-vault.ts"
   },
   "files": [
     "bin",
@@ -18,7 +18,7 @@
   "scripts": {
     "start": "bun run src/proxy.ts",
     "seed": "bun run src/seed.ts",
-    "cli": "bun run bin/context-vault.ts",
+    "cli": "bun run bin/contexter-vault.ts",
     "test": "bun test",
     "test:e2e": "bun run src/test-local.ts",
     "test:e2e:redaction": "bun run src/test-redaction.ts"
@@ -39,12 +39,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nopointt/context-vault"
+    "url": "https://github.com/nopointt/contexter-vault"
   },
   "bugs": {
-    "url": "https://github.com/nopointt/context-vault/issues"
+    "url": "https://github.com/nopointt/contexter-vault/issues"
   },
-  "homepage": "https://github.com/nopointt/context-vault#readme",
+  "homepage": "https://github.com/nopointt/contexter-vault#readme",
   "engines": {
     "bun": ">=1.0.0"
   },

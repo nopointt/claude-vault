@@ -30,8 +30,8 @@ async function load(): Promise<VaultData> {
     }
     return parsed as VaultData;
   } catch (err) {
-    console.error("[context-vault] failed to decrypt vault — wrong key or corrupted file:", err);
-    throw new Error("Vault decryption failed. Check vault.key or reinitialize with: context-vault init");
+    console.error("[contexter-vault] failed to decrypt vault — wrong key or corrupted file:", err);
+    throw new Error("Vault decryption failed. Check vault.key or reinitialize with: contexter-vault init");
   }
 }
 
@@ -85,7 +85,7 @@ export async function vaultDelete(name: string): Promise<boolean> {
   return true;
 }
 
-/** Read the plaintext buffer file (used by `context-vault add` for non-interactive input). */
+/** Read the plaintext buffer file (used by `contexter-vault add` for non-interactive input). */
 export async function readBuffer(): Promise<string | null> {
   try {
     const file = Bun.file(BUFFER_FILE);
@@ -112,7 +112,7 @@ export async function wipeBuffer(): Promise<void> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes("ENOENT")) return;
-    console.error(`[context-vault] wipeBuffer failed: ${msg}`);
+    console.error(`[contexter-vault] wipeBuffer failed: ${msg}`);
   }
 }
 

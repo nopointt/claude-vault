@@ -1,5 +1,5 @@
 ---
-# context-vault-prelaunch.md — Pre-Launch Epic
+# contexter-vault-prelaunch.md — Pre-Launch Epic
 > Layer: L3 | Epic: PRE-LAUNCH | Status: ✅ COMPLETE (pending: bun publish --dry-run, npm adduser)
 > Created: 2026-04-21 (session d3a9f612, re-audit)
 > Gate: ALL tasks must pass before v0.2.0 publish to npm
@@ -58,7 +58,7 @@ netstat -ano | grep 9277 || echo "CLEAN"
 ```
 
 **Done when:**
-- [x] `context-vault stop` kills both supervisor and proxy child
+- [x] `contexter-vault stop` kills both supervisor and proxy child
 - [x] No orphan bun processes after stop
 - [x] proxy.pid cleaned up
 
@@ -76,10 +76,10 @@ netstat -ano | grep 9277 || echo "CLEAN"
 **Verify:**
 ```bash
 # Unix:
-ls -la ~/.context-vault/vault.key
+ls -la ~/.contexter-vault/vault.key
 # Expected: -rw------- (600)
 # Windows:
-bun run bin/context-vault.ts init 2>&1 | grep -i "permission\|warning"
+bun run bin/contexter-vault.ts init 2>&1 | grep -i "permission\|warning"
 # Expected: warning about Windows perms
 ```
 
@@ -143,7 +143,7 @@ netstat -ano | grep 9277 || echo "CLEAN"
 ## [0.2.0] — 2026-04-21
 
 ### Added
-- Renamed from `claude-vault` to `context-vault`
+- Renamed from `claude-vault` to `contexter-vault`
 - Supervisor mode with auto-restart on crash
 - SSE stream error handling (graceful close + synthetic error event)
 - `idleTimeout: 255` for long-running Anthropic requests
@@ -153,8 +153,8 @@ netstat -ano | grep 9277 || echo "CLEAN"
 
 ### Changed
 - Env var: `CLAUDE_VAULT_PORT` → `CONTEXT_VAULT_PORT`
-- Vault dir: `~/.claude-vault/` → `~/.context-vault/`
-- Log prefix unified to `[context-vault]`
+- Vault dir: `~/.claude-vault/` → `~/.contexter-vault/`
+- Log prefix unified to `[contexter-vault]`
 
 ### Fixed
 - Socket closed unexpectedly during large context requests
@@ -176,13 +176,13 @@ netstat -ano | grep 9277 || echo "CLEAN"
 - [x] Verify LICENSE: MIT, year 2026, author
 - [x] Review tsconfig.json: Bun-compatible (ESNext, bundler, bun-types)
 - [ ] `bun publish --dry-run` — clean, correct files list (deferred: need npm adduser)
-- [ ] `npm view context-vault` — name available?
+- [ ] `npm view contexter-vault` — name available?
 
 ---
 
 ### PL-08 — Global pointers (from V-01 P9)
 
-**Action:** Add context-vault pointer to MEMORY.md + create project memory file.
+**Action:** Add contexter-vault pointer to MEMORY.md + create project memory file.
 
 ---
 
@@ -191,9 +191,9 @@ netstat -ano | grep 9277 || echo "CLEAN"
 **Action:** Commit all changes in logical atomic units.
 
 **Commits:**
-1. `feat(rename): claude-vault → context-vault v0.2.0` (package.json, bin, src, .npmignore)
+1. `feat(rename): claude-vault → contexter-vault v0.2.0` (package.json, bin, src, .npmignore)
 2. `fix(proxy): idleTimeout + error handlers + graceful shutdown` (proxy.ts)
-3. `feat(supervisor): auto-restart proxy on crash` (bin/context-vault.ts)
+3. `feat(supervisor): auto-restart proxy on crash` (bin/contexter-vault.ts)
 4. `fix(security): key file permissions on Unix` (crypto.ts)
 5. `docs: CHANGELOG + README for v0.2.0` (CHANGELOG.md, README.md)
 6. `feat(memory): project memory infrastructure` (memory/*)
@@ -220,5 +220,5 @@ PL-01 ✅ → PL-02 ✅ → PL-05 ✅ → PL-03 ✅ → PL-04 ✅ → PL-06 ✅ 
 
 ## Completion
 
-All code tasks complete. 5 atomic commits on main. Remaining: `bun publish --dry-run` (needs `npm adduser`) and `npm view context-vault` (name check).
+All code tasks complete. 5 atomic commits on main. Remaining: `bun publish --dry-run` (needs `npm adduser`) and `npm view contexter-vault` (name check).
 (bugs first, then docs, then publish prep, then commits last)

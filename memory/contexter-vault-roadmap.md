@@ -1,12 +1,12 @@
 ---
-# context-vault-roadmap.md — Roadmap
+# contexter-vault-roadmap.md — Roadmap
 > Layer: L2 | Frequency: medium | Loaded: at session start
 > Last updated: 2026-04-21
 ---
 
 ## Current Focus: V-01 Rename + Ship v0.2.0
 
-**Scope:** Rename project from `claude-vault` to `context-vault`. Move to `development/` (not `tools/`). Fix SSE error handling. Set up memory infrastructure. Catalogue bugs + tech debt. Publish v0.2.0 as first official open-source release on npm + GitHub.
+**Scope:** Rename project from `claude-vault` to `contexter-vault`. Move to `development/` (not `tools/`). Fix SSE error handling. Set up memory infrastructure. Catalogue bugs + tech debt. Publish v0.2.0 as first official open-source release on npm + GitHub.
 
 **Status:** P1 (move) + P2 (rename) + P3 (external refs) DONE in working copy. Not yet committed. Memory (P4) in progress. Audits (P5/P6/P7), publish prep (P8), commits (P10), global pointers (P9) pending.
 
@@ -16,7 +16,7 @@
 
 | Epic | Description | Status | L3 File |
 |---|---|---|---|
-| **V-01** | **Rename claude-vault → context-vault + ship v0.2.0 open-source** | **🔶 IN PROGRESS** | `context-vault-v1.md` |
+| **V-01** | **Rename claude-vault → contexter-vault + ship v0.2.0 open-source** | **🔶 IN PROGRESS** | `contexter-vault-v1.md` |
 | V-02 | Resilience: supervisor-worker split, detached mode, UNPROXIED fallback, auto-respawn | ⬜ PLANNED | — |
 | V-03 | Security hardening: threat model, secure buffer wipe, key ACL, body size limit, vault versioning | ⬜ PLANNED | — |
 | V-04 | Observability: `/health` endpoint, log rotation, `--verbose` flag, real status check | ⬜ PLANNED (partial in V-01) | — |
@@ -30,7 +30,7 @@
 
 | Phase | What | Status |
 |---|---|---|
-| P1 | Directory move `tools/claude-vault/` → `development/context-vault/` | ✅ COPIED (old preserved per G1) |
+| P1 | Directory move `tools/claude-vault/` → `development/contexter-vault/` | ✅ COPIED (old preserved per G1) |
 | P2 | Code rename: package.json, bin/, src/*, hooks, .npmignore, README | ✅ DONE |
 | P3 | External refs: settings.json hook paths + ANTHROPIC_BASE_URL, .claudeignore | ✅ DONE |
 | P4 | Memory infrastructure: STATE + L1 + L2 + L3 + backlog + chronicle | 🔶 IN PROGRESS |
@@ -70,7 +70,7 @@ Key items:
 - Request body size limit (B-10, prevent memory exhaustion)
 - Vault file format versioning (B-13, `_version: 1` field for future migrations)
 - Encrypt-at-rest for `.pid` + buffer? evaluate necessity
-- Secret rotation helpers (`context-vault rotate <name>`)
+- Secret rotation helpers (`contexter-vault rotate <name>`)
 
 Dependencies: V-01 shipped.
 
@@ -85,7 +85,7 @@ Key items:
 - `GET /metrics` endpoint (Prometheus format; requests/min, redaction rate, upstream errors)
 - Log rotation: size-based, keep N files
 - `--verbose` flag for debug logging (no secret values, only pattern counts)
-- `context-vault status` actually verifies proxy alive via `curl /health` (B-17 fix)
+- `contexter-vault status` actually verifies proxy alive via `curl /health` (B-17 fix)
 - Optional OpenTelemetry export for enterprise
 
 Partial implementation in V-01: basic `/health` + real `status` check.
@@ -97,11 +97,11 @@ Partial implementation in V-01: basic `/health` + real `status` check.
 **Goal:** Open-source traction and adoption.
 
 Key items:
-- HN Show HN post: "Show HN: context-vault — local proxy that redacts secrets from Claude Code API traffic"
+- HN Show HN post: "Show HN: contexter-vault — local proxy that redacts secrets from Claude Code API traffic"
 - r/ClaudeAI launch post
 - r/selfhosted privacy angle
 - r/programming technical angle (SSE sliding window redaction algorithm)
-- Blog post on nopoint site or contexter.cc/context-vault subpage
+- Blog post on nopoint site or contexter.cc/contexter-vault subpage
 - Demo GIF (asciinema or screen recording)
 - GitHub README badges (npm version, license, bun runtime, CI status)
 - Twitter/X thread with examples
@@ -116,12 +116,12 @@ Dependencies: V-01 published, CI green (V-07).
 **Goal:** Beyond MVP usefulness for power users.
 
 Key items:
-- Claude Code plugin package (`.claude-plugin` pattern — installable via `/plugin install context-vault`)
+- Claude Code plugin package (`.claude-plugin` pattern — installable via `/plugin install contexter-vault`)
 - Secret expiry dates (auto-remove after 30/90/custom days)
 - Secret categories/tags (organize by project, auto-load subset)
 - Multi-profile vaults (work / personal / per-project)
-- `.env` file import (`context-vault import .env`)
-- Export vault to encrypted backup (`context-vault export`)
+- `.env` file import (`contexter-vault import .env`)
+- Export vault to encrypted backup (`contexter-vault export`)
 - Cross-machine sync via encrypted blob on user-controlled storage (R2, S3, iCloud)
 - Biometric unlock (macOS TouchID, Windows Hello) for vault key
 
@@ -150,7 +150,7 @@ Dependencies: can run parallel with V-02/V-03.
 
 ## Post-V-01 Backlog
 
-See `context-vault-backlog.md` for:
+See `contexter-vault-backlog.md` for:
 - 17 catalogued bugs (B-01..B-17) with severity + V-0X epic assignment
 - ~15 tech debt items
 - Documentation gaps (CONTRIBUTING, CHANGELOG, SECURITY, ARCHITECTURE docs)

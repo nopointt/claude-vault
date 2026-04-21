@@ -64,7 +64,7 @@ if (missing.length > 0) {
   // syntax to external systems (files on disk, HTTP requests, etc).
   const output = {
     decision: "block",
-    reason: `context-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: context-vault add <name>. Run \`context-vault list\` to see stored secrets.`,
+    reason: `contexter-vault: unknown secret(s) ${missing.map((n) => `"${n}"`).join(", ")}. Add with: contexter-vault add <name>. Run \`contexter-vault list\` to see stored secrets.`,
   };
   console.log(JSON.stringify(output));
   process.exit(0);

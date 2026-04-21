@@ -53,7 +53,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     console.log("Registered hooks: secret-store (UserPromptSubmit), pre-tool-use (PreToolUse)");
 
     const claudeIgnorePath = join(process.env.HOME || process.env.USERPROFILE || "", ".claudeignore");
-    const ignoreEntries = [".context-vault/", "*.key", "*.enc"];
+    const ignoreEntries = [".contexter-vault/", "*.key", "*.enc"];
     const claudeIgnoreFile = Bun.file(claudeIgnorePath);
     let existing = "";
     if (await claudeIgnoreFile.exists()) {
@@ -62,14 +62,14 @@ const COMMANDS: Record<string, () => Promise<void>> = {
     const missing = ignoreEntries.filter((e) => !existing.includes(e));
     if (missing.length > 0) {
       const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
-      const block = `${separator}\n# context-vault: prevent Claude from reading secrets\n${missing.join("\n")}\n`;
+      const block = `${separator}\n# contexter-vault: prevent Claude from reading secrets\n${missing.join("\n")}\n`;
       await Bun.write(claudeIgnorePath, existing + block);
       console.log(`Added ${missing.length} entries to ${claudeIgnorePath}`);
     } else {
       console.log(".claudeignore already configured");
     }
 
-    console.log("Run: context-vault start");
+    console.log("Run: contexter-vault start");
   },
 
   async start() {
@@ -81,13 +81,13 @@ const COMMANDS: Record<string, () => Promise<void>> = {
         env: { ...process.env },
       });
       child.unref();
-      console.log(`[context-vault] detached supervisor (PID: ${child.pid}), log: ${logFile}`);
+      console.log(`[contexter-vault] detached supervisor (PID: ${child.pid}), log: ${logFile}`);
       process.exit(0);
     }
 
     const pidFile = join(VAULT_DIR, "proxy.pid");
     await Bun.write(pidFile, String(process.pid));
-    console.log(`[context-vault] supervisor starting (PID: ${process.pid})`);
+    console.log(`[contexter-vault] supervisor starting (PID: ${process.pid})`);
 
     const proxyPath = join(import.meta.dir, "..", "src", "proxy.ts");
     const MAX_RESTARTS = 50;
@@ -101,7 +101,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 
     const cleanup = async () => {
       shuttingDown = true;
-      console.log("[context-vault] supervisor shutting down");
+      console.log("[contexter-vault] supervisor shutting down");
       if (activeChild) {
         activeChild.kill("SIGTERM");
         const timeout = setTimeout(() => {
@@ -135,12 +135,12 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 
       restartCount++;
       if (restartCount > MAX_RESTARTS) {
-        console.error(`[context-vault] proxy exceeded ${MAX_RESTARTS} rapid restarts, stopping supervisor`);
+        console.error(`[contexter-vault] proxy exceeded ${MAX_RESTARTS} rapid restarts, stopping supervisor`);
         break;
       }
 
       const backoff = Math.min(BACKOFF_BASE_MS * restartCount, BACKOFF_MAX_MS);
-      console.log(`[context-vault] proxy exited (code ${exitCode}), restarting in ${backoff}ms (${restartCount}/${MAX_RESTARTS})`);
+      console.log(`[contexter-vault] proxy exited (code ${exitCode}), restarting in ${backoff}ms (${restartCount}/${MAX_RESTARTS})`);
       await Bun.sleep(backoff);
     }
 
@@ -167,8 +167,8 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   async add() {
     const name = args[0];
     if (!name) {
-      console.error("Usage: context-vault add <name>");
-      console.error("  Reads value from stdin or ~/.context-vault/buffer.txt");
+      console.error("Usage: contexter-vault add <name>");
+      console.error("  Reads value from stdin or ~/.contexter-vault/buffer.txt");
       process.exit(1);
     }
 
@@ -215,7 +215,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   async remove() {
     const name = args[0];
     if (!name) {
-      console.error("Usage: context-vault remove <name>");
+      console.error("Usage: contexter-vault remove <name>");
       process.exit(1);
     }
     const deleted = await vaultDelete(name);
@@ -245,7 +245,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 };
 
 if (!command || !(command in COMMANDS)) {
-  console.log("context-vault — protect secrets from Claude Code transcripts\n");
+  console.log("contexter-vault — protect secrets from Claude Code transcripts\n");
   console.log("Commands:");
   console.log("  init     Initialize vault + register in Claude Code settings");
   console.log("  start [--detach]  Start the proxy server (--detach runs in background)");

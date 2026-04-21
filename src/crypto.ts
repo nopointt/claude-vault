@@ -15,7 +15,7 @@ export async function generateKey(): Promise<Buffer> {
   const key = randomBytes(32);
   await Bun.write(KEY_FILE, key);
   if (IS_WINDOWS) {
-    console.warn("[context-vault] Windows does not support file permissions — ensure vault.key is in a user-only directory");
+    console.warn("[contexter-vault] Windows does not support file permissions — ensure vault.key is in a user-only directory");
   } else {
     chmodSync(KEY_FILE, 0o600);
   }
@@ -26,13 +26,13 @@ export async function generateKey(): Promise<Buffer> {
 export async function loadKey(): Promise<Buffer> {
   const file = Bun.file(KEY_FILE);
   if (!(await file.exists())) {
-    throw new Error(`Vault key not found at ${KEY_FILE}. Run: context-vault init`);
+    throw new Error(`Vault key not found at ${KEY_FILE}. Run: contexter-vault init`);
   }
   if (!IS_WINDOWS) {
     try {
       const mode = statSync(KEY_FILE).mode & 0o777;
       if (mode & 0o077) {
-        console.warn(`[context-vault] WARNING: vault.key is accessible by other users (mode: ${mode.toString(8)}). Run: chmod 600 ${KEY_FILE}`);
+        console.warn(`[contexter-vault] WARNING: vault.key is accessible by other users (mode: ${mode.toString(8)}). Run: chmod 600 ${KEY_FILE}`);
       }
     } catch {}
   }
